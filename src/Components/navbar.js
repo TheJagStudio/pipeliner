@@ -56,8 +56,8 @@ const navbar = () => {
 						Traning Pipeline
 					</a>
 				</div>
-				<div className={(window.location.pathname === "/predict" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
-					<a href="/" className="text-xl font-mono my-0.5">
+				<div className={(window.location.pathname === "/prediction" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+					<a href="/prediction" className="text-xl font-mono my-0.5">
 						Prediction Pipeline
 					</a>
 				</div>

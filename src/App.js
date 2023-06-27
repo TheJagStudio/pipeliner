@@ -11,7 +11,8 @@ export default function App() {
 				<Navbar />
 				<Routes>
 					<Route path="/" element={<TrainingPipeline title="Home" />} />
-					<Route path="/imageAnnotation" element={<ImageAnnotation title="Home" />} />
+					<Route path="/prediction" element={<TrainingPipeline title="Home" />} />
+					<Route path="/image-annotation" element={<ImageAnnotation title="Image Annoatator" />} />
 					{/* <Route path="/text" element={<TextAnotator title="Text Anotator" />} /> */}
 				</Routes>
 			</div>

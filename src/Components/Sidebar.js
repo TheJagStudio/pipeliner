@@ -145,7 +145,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Trainer",
-					subNodeType: "InputDataset",
+					subNodeType: "Trainer",
 				},
 				{
 					subSVG: (
@@ -156,7 +156,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Metrics",
-					subNodeType: "InputDataset",
+					subNodeType: "Metrics",
 				},
 				{
 					subSVG: (
@@ -175,7 +175,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Output",
-					subNodeType: "SplitDataset",
+					subNodeType: "Output",
 				},
 				{
 					subSVG: (
@@ -221,7 +221,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Export",
-					subNodeType: "SplitDataset",
+					subNodeType: "Export",
 				},
 			],
 		},
@@ -250,7 +250,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Predictor",
-					subNodeType: "InputDataset",
+					subNodeType: "Predictor",
 				},
 				{
 					subSVG: (
@@ -259,7 +259,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Data Source (Image/Video)",
-					subNodeType: "InputDataset",
+					subNodeType: "ImageDataSource",
 				},
 				{
 					subSVG: (
@@ -278,7 +278,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Data Source (URL)",
-					subNodeType: "SplitDataset",
+					subNodeType: "UrlDataSource",
 				},
 				{
 					subSVG: (
@@ -288,7 +288,7 @@ const Sidebar = () => {
 						</svg>
 					),
 					subName: "Data Source (Camera)",
-					subNodeType: "SplitDataset",
+					subNodeType: "CamreraDataSource",
 				},
 				{
 					subSVG: (

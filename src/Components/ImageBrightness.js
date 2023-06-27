@@ -107,4 +107,4 @@ const ImageBrightness = ({ data, selected }) => {
 	);
 };
 
-export default ImageBrightness;
+export default memo(ImageBrightness);

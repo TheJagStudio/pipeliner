@@ -14,6 +14,18 @@ import ImageRotateFlip from "../Components/ImageRotateFlip";
 import ImageGrayscale from "../Components/ImageGrayscale";
 import ImageBrightness from "../Components/ImageBrightness";
 
+// Training
+import Trainer from "../Components/Trainer";
+import Metrics from "../Components/Metrics";
+import Output from "../Components/Output";
+import Export from "../Components/Export";
+
+// Inference
+import Predictor from "../Components/Predictor";
+import ImageDataSource from "../Components/ImageDataSource";
+import UrlDataSource from "../Components/UrlDataSource";
+import CamreraDataSource from "../Components/CamreraDataSource";
+
 // Gallery
 import ImageViewer from "../Components/ImageViewer";
 
@@ -28,8 +40,17 @@ const nodeTypes = {
 	ImageRotateFlip: ImageRotateFlip,
 	ImageGrayscale: ImageGrayscale,
 	ImageBrightness: ImageBrightness,
+	Trainer: Trainer,
+	Metrics: Metrics,
+	Output: Output,
+	Export: Export,
+	Predictor: Predictor,
+	ImageDataSource: ImageDataSource,
+	UrlDataSource: UrlDataSource,
+	CamreraDataSource: CamreraDataSource,
 	ImageViewer: ImageViewer,
 };
+
 
 const initNodes = [
 	{
@@ -88,6 +109,34 @@ const initNodes = [
 		position: { x: 1100, y: 0 },
 		dragHandle: ".custom-drag-handle",
 	},
+	{
+		id: "9",
+		type: "Trainer",
+		data: { id: 9, images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 },
+		position: { x: 1350, y: 0 },
+		dragHandle: ".custom-drag-handle",
+	},
+	{
+		id: "10",
+		type: "Metrics",
+		data: { id: 10, images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 },
+		position: { x: 1600, y: 0 },
+		dragHandle: ".custom-drag-handle",
+	},
+	{
+		id: "11",
+		type: "Output",
+		data: { id: 11, images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 },
+		position: { x: 1850, y: 0 },
+		dragHandle: ".custom-drag-handle",
+	},
+	{
+		id: "12",
+		type: "Export",
+		data: { id: 12, images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 },
+		position: { x: 2100, y: 0 },
+		dragHandle: ".custom-drag-handle",
+	},
 ];
 
 const initEdges = [
@@ -128,6 +177,26 @@ const initEdges = [
 		id: "e7-8",
 		source: "7",
 		target: "8",
+	},
+	{
+		id: "e8-9",
+		source: "8",
+		target: "9",
+	},
+	{
+		id: "e9-10",
+		source: "9",
+		target: "10",
+	},
+	{
+		id: "e10-11",
+		source: "10",
+		target: "11",
+	},
+	{
+		id: "e11-12",
+		source: "11",
+		target: "12",
 	},
 ];
 const TrainingPipeline = () => {
@@ -170,6 +239,14 @@ const TrainingPipeline = () => {
 			} else if (type === "ImageRotateFlip") {
 				tempData = { id: getId(), images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 };
 			} else if (type === "ImageViewer") {
+				tempData = { id: getId(), images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 };
+			} else if (type === "Trainer") {
+				tempData = { id: getId(), images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 };
+			} else if (type === "Metrics") {
+				tempData = { id: getId(), images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 };
+			} else if (type === "Output") {
+				tempData = { id: getId(), images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 };
+			} else if (type === "Export") {
 				tempData = { id: getId(), images: 0, items: 0, completed: 0, inProgress: 0, progress: 0 };
 			}
 			const newNode = {

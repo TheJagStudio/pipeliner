@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Stage, Layer, Line } from "react-konva";
 
-const imageAnnotation = () => {
+const ImageAnnotation = () => {
 	const [shapes, setShapes] = useState([]);
+	const stageRef = useRef()
 
 	const handleMouseDown = (event) => {
 		const { x, y } = event.target.getStage().getPointerPosition();
@@ -59,4 +60,4 @@ const imageAnnotation = () => {
 	);
 };
 
-export default imageAnnotation;
+export default ImageAnnotation;

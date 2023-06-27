@@ -1,8 +1,12 @@
 import React, { memo, useState } from "react";
 import { Handle, Position } from "reactflow";
 
+import TabNavItem from "./TabNavItem";
+import TabContent from "./TabContent";
+
 const ImageViewer = ({ data, selected }) => {
 	const [finalData, setFinalData] = useState(data);
+	const [activeTab, setActiveTab] = useState("tab1");
 
 	return (
 		<div key={data["id"]} className={"relative shadow-md h-fit w-96 rounded-md border border-pink-500 bg-white outline outline-[6px] transition-all duration-700 " + (selected ? "outline-white outline-offset-8" : "outline-transparent outline-offset-0")}>
@@ -47,37 +51,96 @@ const ImageViewer = ({ data, selected }) => {
 			</div>
 			<hr className="border-pink-500" />
 			<div className="p-2 w-full h-full bg-primary-800 flex flex-col gap-2 rounded-b-[5px] cursor-default">
-				<div className="text-white relative">
-					<svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} fill="currentColor" className="absolute top-1/2 -translate-y-1/2 left-2" viewBox="0 0 16 16">
-						<path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-					</svg>
-					<input type="text" placeholder="Search..." className="bg-primary-900 rounded-lg p-1 pl-8 w-full outline-none focus:outline-none" />
-				</div>
-				<div className="grid grid-cols-5 gap-2 h-fit max-h-[18.5rem] overflow-hidden">
-					<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
-					<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+				<ul className="flex items-center justify-between">
+					<TabNavItem title="Train" id="tab1" activeTab={activeTab} setActiveTab={setActiveTab} />
+					<TabNavItem title="Validation" id="tab2" activeTab={activeTab} setActiveTab={setActiveTab} />
+					<TabNavItem title="Test" id="tab3" activeTab={activeTab} setActiveTab={setActiveTab} />
+				</ul>
+				<div>
+					<TabContent id="tab1" activeTab={activeTab}>
+						<div className="grid grid-cols-5 gap-2 h-fit max-h-[18.5rem] overflow-hidden">
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+						</div>
+					</TabContent>
+					<TabContent id="tab2" activeTab={activeTab}>
+						<div className="grid grid-cols-5 gap-2 h-fit max-h-[18.5rem] overflow-hidden">
+							<img src={"https://source.unsplash.com/featured/300x300?sig=11"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=12"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=13"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=14"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=15"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=16"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=17"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=18"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=19"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=20"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=21"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=22"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=23"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=24"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=25"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=26"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=27"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=28"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=29"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=30"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=31"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=32"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=33"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=34"} className="w-full h-auto object-cover rounded-lg" />
+						</div>
+					</TabContent>
+					<TabContent id="tab3" activeTab={activeTab}>
+						<div className="grid grid-cols-5 gap-2 h-fit max-h-[18.5rem] overflow-hidden">
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=5"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=6"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=7"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=8"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=9"} className="w-full h-auto object-cover rounded-lg" />
+							<img src={"https://source.unsplash.com/featured/300x300?sig=10"} className="w-full h-auto object-cover rounded-lg" />
+						</div>
+					</TabContent>
 				</div>
 			</div>
 		</div>
