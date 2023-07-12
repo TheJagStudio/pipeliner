@@ -1,9 +1,9 @@
 from django.urls import path
 from . import views
 
+# path("sysInfo/", views.sysInfo, name="sysInfo"),
 urlpatterns = [
     path("extractFolder/", views.extractFolder, name="extractFolder"),
-    path("sysInfo/", views.sysInfo, name="sysInfo"),
     path("projectFecther/", views.projectFecther, name="projectFecther"),
     path("datasetFecther/", views.datasetFecther, name="datasetFecther"),
     path("modelFecther/", views.modelFecther, name="modelFecther"),
@@ -16,5 +16,6 @@ urlpatterns = [
     path("addNewFebric/", views.addNewFebric, name="addNewFebric"),
     path("taskDetails/", views.taskDetails, name="taskDetails"),
     path("AnnotatorDetails/", views.AnnotatorDetails, name="AnnotatorDetails"),
-    path("AnnotatorAllocation/", views.AnnotatorAllocation, name="AnnotatorAllocation"),
+    path("AnnotatorAllocation/", views.AnnotatorAllocation,
+         name="AnnotatorAllocation"),
 ]

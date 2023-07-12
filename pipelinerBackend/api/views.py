@@ -17,8 +17,9 @@ import json
 import zipfile
 import os
 from datetime import datetime
-import psutil
-import pynvml
+
+# import psutil
+# import pynvml
 import threading
 from ultralytics import YOLO
 import torch
@@ -150,29 +151,29 @@ def extractFolder(request):
             )
 
 
-# Define a view that returns system information
-def sysInfo(request):
-    # Get the percentage of used RAM
-    ram = int(psutil.virtual_memory()[2])
-    # Get the average CPU load over the last 1, 5, and 15 minutes
-    load1, load5, load15 = psutil.getloadavg()
-    # Calculate the percentage of CPU usage
-    cpu = int((load5 / os.cpu_count()) * 100)
-    # Initialize the NVML library
-    pynvml.nvmlInit()
-    # Get the handle for the first GPU
-    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-    # Get the memory information for the GPU
-    info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-    # Shutdown the NVML library
-    pynvml.nvmlShutdown()
-    # Calculate the percentage of used VRAM
-    vram = int(info.used * 100 / info.total)
+# # Define a view that returns system information
+# def sysInfo(request):
+#     # Get the percentage of used RAM
+#     ram = int(psutil.virtual_memory()[2])
+#     # Get the average CPU load over the last 1, 5, and 15 minutes
+#     load1, load5, load15 = psutil.getloadavg()
+#     # Calculate the percentage of CPU usage
+#     cpu = int((load5 / os.cpu_count()) * 100)
+#     # Initialize the NVML library
+#     pynvml.nvmlInit()
+#     # Get the handle for the first GPU
+#     handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+#     # Get the memory information for the GPU
+#     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+#     # Shutdown the NVML library
+#     pynvml.nvmlShutdown()
+#     # Calculate the percentage of used VRAM
+#     vram = int(info.used * 100 / info.total)
 
-    # Create a dictionary containing the system information
-    data = {"ram": ram, "cpu": cpu, "vram": vram}
-    # Return the system information as a JSON object
-    return HttpResponse(json.dumps(data), content_type="application/json")
+#     # Create a dictionary containing the system information
+#     data = {"ram": ram, "cpu": cpu, "vram": vram}
+#     # Return the system information as a JSON object
+#     return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 # Define a view that returns a list of project folders
