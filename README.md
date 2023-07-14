@@ -6,7 +6,7 @@ The goal of this project is to provide a tool for annotating images and preparin
 
 This project requires python 3.11 
 
-![Fabric Scan](https://drive.google.com/uc?export=download&id=1pUUDCFoF8jZJDGY8dHW9tSNYgmhjb2oM)
+![Fabric Scan](https://github.com/TheJagStudio/pipeliner/raw/main/pipelinerBackend/static/fabricScanHome.png)
 
 
 ### Main features
