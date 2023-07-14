@@ -6,7 +6,7 @@ The goal of this project is to provide a tool for annotating images and preparin
 
 This project requires python 3.11 
 
-![Default Home View](__screenshots/home.png?raw=true "Title")
+![Fabric Scan](https://drive.google.com/uc?export=download&id=1pUUDCFoF8jZJDGY8dHW9tSNYgmhjb2oM)
 
 
 ### Main features
@@ -53,7 +53,7 @@ First clone the repository from Github and switch to the new directory:
     
 Activate the virtualenv for your project.
 
-    	$ python3 myprojectenv/bin/activate
+    $ python3 myprojectenv/bin/activate
 
 You can now run the development server:
 
