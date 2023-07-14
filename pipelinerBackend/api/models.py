@@ -48,6 +48,7 @@ class Fabric(models.Model):
     fabricType = models.CharField(max_length=100, default="", blank=True)
     material = models.CharField(max_length=100, default="", blank=True)
     sampleImages = models.ImageField(upload_to=sample_path, default="", blank=True)
+    labels = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return self.fabricName

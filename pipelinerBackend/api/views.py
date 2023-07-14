@@ -323,7 +323,6 @@ def modelTraining(request):
             baseModel = request.POST["baseModel"]
             imgsz = request.POST["imgsz"]
             name = request.POST["name"]
-            device = "0"
             baseDir = os.getcwd()
             # Initialize a YOLO model with the specified base model
             model = YOLO("baseModels/" + baseModel)
@@ -335,7 +334,6 @@ def modelTraining(request):
                 + "/datasets/"
                 + datasetName
                 + "/data.yaml",
-                device=device,
                 epochs=int(epochs),
                 imgsz=int(imgsz),
                 project=baseDir + "/projects/" + project + "/models/",
@@ -588,11 +586,6 @@ def addNewFebric(request):
                 if fabricName != "":
                     extract_folder = str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
 
-                    newDataset = Dataset()
-                    newDataset.fabric = newFabric
-                    newDataset.datasetName = extract_folder
-                    newDataset.save()
-
                     target_folder = "./projects/" + fabricName + "/datasets/"
                     with zipfile.ZipFile(dataset, "r") as zip_ref:
                         zip_ref.extractall(os.path.join(target_folder, extract_folder))
@@ -749,14 +742,13 @@ def taskDetails(request):
     try:
         project = request.GET["project"]
         dataset = request.GET["dataset"]
-        print(project, dataset)
         task = Dataset.objects.filter(
             fabric=Fabric.objects.filter(fabricName=project).first(),
             datasetName=dataset,
         ).first()
-        print(task.tasks)
+        labels = task.fabric.labels
         return HttpResponse(
-            json.dumps({"tasks": json.loads(task.tasks)}),
+            json.dumps({"tasks": task.tasks, "labels": labels}),
             content_type="application/json",
         )
     except Exception as e:
