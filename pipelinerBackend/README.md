@@ -6,7 +6,7 @@ The goal of this project is to provide a tool for annotating images and preparin
 
 This project requires python 3.11 
 
-![Default Home View](__screenshots/home.png?raw=true "Title")
+![Fabric Scan](https://github.com/TheJagStudio/pipeliner/raw/main/pipelinerBackend/static/fabricScanHome.png)
 
 
 ### Main features
