@@ -161,7 +161,9 @@ const AnnotatorAlloaction = () => {
                                                 --Select Annotator--
                                             </option>
                                             {annotators.map((annotator, index) => (
-                                                <option value={annotator[0]}>{annotator[1]}</option>
+                                                <option value={annotator[0]} key={index}>
+                                                    {annotator[1]}
+                                                </option>
                                             ))}
                                         </select>
                                     </span>
@@ -186,74 +188,15 @@ const AnnotatorAlloaction = () => {
                             </div>
                             <div
                                 onClick={() => {
-                                    document.getElementById("progressBar").classList.remove("hidden");
                                     document.getElementById("cover").classList.remove("hidden");
-                                    let progressInterval = setInterval(() => {
-                                        localStorage.setItem("progress", localStorage.getItem("progress") + 2);
-                                        document.getElementById("progress").style.width = localStorage.getItem("progress") + "%";
-                                        if (localStorage.getItem("progress") > 95) {
-                                            localStorage.setItem("progress", 10 + (Math.floor(Math.random() * 10) + 1) * 2);
-                                            document.getElementById("progress").style.width = localStorage.getItem("progress") + "%";
-                                        }
-                                    }, 1000);
-                                    var formdata = new FormData();
-                                    formdata.append("projectName", projectName);
-                                    formdata.append("datasetName", datasetName);
-                                    formdata.append("epochs", epochs);
-                                    formdata.append("baseModel", baseModel);
-                                    formdata.append("imgsz", images);
-                                    formdata.append("name", modelName);
-
-                                    var requestOptions = {
-                                        method: "POST",
-                                        body: formdata,
-                                        redirect: "follow",
-                                    };
-
-                                    fetch(process.env.REACT_APP_SERVER + "/api/training", requestOptions)
-                                        .then((response) => response.json())
-                                        .then((result) => {
-                                            if (result["error"] === undefined) {
-                                                alert(result["success"]);
-                                            } else {
-                                                alert(result["error"]);
-                                            }
-                                            clearInterval(resultInterval);
-                                            clearInterval(progressInterval);
-                                            document.getElementById("progressBar").classList.add("hidden");
-                                            document.getElementById("cover").classList.add("hidden");
-                                        })
-                                        .catch((error) => console.log("error", error));
-                                    let resultInterval = setInterval(() => {
-                                        fetch(process.env.REACT_APP_SERVER + "/api/modelDetails?project=" + projectName + "&model=" + modelName)
-                                            .then((res) => res.json())
-                                            .then((data) => {
-                                                // check if data has error key
-                                                if (data["error"] === undefined) {
-                                                    setTableData(data["data"]);
-                                                    grid.render(wrapperRef.current);
-                                                    grid.updateConfig({
-                                                        data: data["data"],
-                                                        sort: true,
-                                                        pagination: {
-                                                            limit: 10,
-                                                            summary: true,
-                                                        },
-                                                    }).forceRender();
-                                                } else {
-                                                    setTableData([]);
-                                                }
-                                            })
-                                            .catch((err) => {
-                                                console.log(err);
-                                            });
-                                    }, 10000);
                                 }}
                                 className="bg-primary-800 rounded-lg flex items-center justify-center cursor-pointer hover:bg-primary-800/50 transition-all duration-3"
                             >
-                                <p className="font-mono font-meduim">Add Annotator</p>
+                                <p className="font-mono font-meduim">Assign Annotator In CVAT</p>
                             </div>
                         </div>
+
+                        <div id="cover" className="hidden absolute top-0 left-0 bg-primary-200/80 animate-pulse h-full w-full rounded-md backdrop-blur-xl z-50"></div>
                     </div>
                 </div>
             </div>

@@ -3,7 +3,7 @@ import ImageModel from "./ImageModel";
 import TabNavItem from "./TabNavItem";
 import TabContent from "./TabContent";
 
-const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
+const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabels, setCurrentPolygonIndex }) => {
     const swiperRef = useRef(null);
     const [images, setImages] = useState([]);
     const [viewImageSrc, setViewImageSrc] = useState(0);
@@ -28,11 +28,51 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
 
     return (
         <div className="w-[20%] bg-primary-800 rounded-lg inner-shadow p-3 relative">
-            <a id="cvatLink" href="https://www.cvat.ai/" target="_blank">
-                <div className="absolute -right-5 top-2 h-14 rounded-lg z-[60] translate-x-full cursor-pointer scale-0 transition-all overflow-hidden">
-                    <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg overflow-hidden shadow-xl" />
+            <div id="cvatLink" className="absolute -right-5 top-2 h-fit bg-primary-950 border border-gray-100/25 p-1 gap-1 flex flex-col rounded-lg z-[70] translate-x-full cursor-pointer scale-0 transition-all ">
+                <div
+                    onClick={() => {
+                        document.getElementById("cvatLink").classList.toggle("scale-0");
+                    }}
+                    className="absolute -top-3 -left-2 bg-white rounded-full p-1"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} fill="#000" className="" viewBox="0 0 16 16">
+                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
+                    </svg>
                 </div>
-            </a>
+                <a href="https://www.cvat.ai/" target="_blank">
+                    <div className="">
+                        {/* <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
+                        <button className="h-10 rounded shadow-xl overflow-hidden bg-primary-800 text-white w-20 flex flex-nowrap justify-center items-center gap-2">
+                            Train
+                            <svg width={18} height={18} fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3.293 20.707a1 1 0 0 1 0-1.414L17.586 5H12a1 1 0 0 1 0-2h8a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0V6.414L4.707 20.707a1 1 0 0 1-1.414 0Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </a>
+                <a href="https://www.cvat.ai/" target="_blank">
+                    <div className="">
+                        {/* <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
+                        <button className="h-10 rounded shadow-xl overflow-hidden bg-primary-800 text-white w-20 flex flex-nowrap justify-center items-center gap-2">
+                            Test
+                            <svg width={18} height={18} fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3.293 20.707a1 1 0 0 1 0-1.414L17.586 5H12a1 1 0 0 1 0-2h8a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0V6.414L4.707 20.707a1 1 0 0 1-1.414 0Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </a>
+                <a href="https://www.cvat.ai/" target="_blank">
+                    <div className="">
+                        {/* <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
+                        <button className="h-10 rounded shadow-xl overflow-hidden bg-primary-800 text-white w-20 flex flex-nowrap justify-center items-center gap-2">
+                            Valid
+                            <svg width={18} height={18} fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3.293 20.707a1 1 0 0 1 0-1.414L17.586 5H12a1 1 0 0 1 0-2h8a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0V6.414L4.707 20.707a1 1 0 0 1-1.414 0Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </a>
+            </div>
             <ImageModel imgArr={notAnnotated} imgSrc={viewImageSrc} swiperRef={swiperRef} />
             <div>
                 <div className="block text-sm">
@@ -92,7 +132,6 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
                         </span>
                     </span>
                 </div>
-
                 <div className="block text-sm my-2">
                     <span className="text-white">Path to Dataset</span>
                     <span className="relative mt-1.5 flex">
@@ -106,10 +145,14 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
                                         .then((res) => res.json())
                                         .then((data) => {
                                             if (!data.hasOwnProperty("error")) {
-                                                let taskDetails = data["tasks"];
+                                                let taskDetails = JSON.parse(data["tasks"]);
+                                                let labels = data["labels"];
                                                 let cvatLink = document.getElementById("cvatLink");
-                                                cvatLink.href = "https://app.cvat.ai/tasks/" + taskDetails["train"];
-                                                cvatLink.childNodes[0].classList.remove("scale-0");
+                                                cvatLink.childNodes[1].href = "https://app.cvat.ai/tasks/" + taskDetails["train"];
+                                                cvatLink.childNodes[2].href = "https://app.cvat.ai/tasks/" + taskDetails["test"];
+                                                cvatLink.childNodes[3].href = "https://app.cvat.ai/tasks/" + taskDetails["valid"];
+                                                cvatLink.classList.remove("scale-0");
+                                                setLabels(labels);
                                             }
                                         })
                                         .catch((err) => {
@@ -138,7 +181,6 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
                         </span>
                     </span>
                 </div>
-
                 <div
                     onClick={() => {
                         let project = document.getElementById("project").value;
@@ -192,8 +234,8 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
             <hr className="my-3 border-primary-200 scale-x-110" />
             <div className="h-full">
                 <ul className="flex items-center justify-between">
-                    <TabNavItem title="Non-Annotated" id="Non-Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
-                    <TabNavItem title="Annotated" id="tab2" activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <TabNavItem title="Non-Annotated" classes={activeTab == "Non-Annotated" ? "bg-primary-900" : ""} id="Non-Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <TabNavItem title="Annotated" classes={activeTab == "Annotated" ? "bg-primary-900" : ""} id="Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
                 </ul>
                 <div>
                     <TabContent id="Non-Annotated" activeTab={activeTab}>
@@ -221,6 +263,7 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
                                                 }
                                                 setTempShape([[]]);
                                                 setMagicPoints([]);
+                                                setCurrentPolygonIndex(0);
                                             }}
                                             className="absolute h-7 w-7 scale-0 -translate-x-full group-hover:translate-x-0 group-hover:scale-100 bg-transparent hover:bg-primary-200 top-2 right-2 rounded border-2 border-transparent hover:border-primary-500 flex items-center justify-center transition-all duration-300"
                                         >
@@ -244,6 +287,9 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints }) => {
                                 </div>
                             ))}
                         </div>
+                    </TabContent>
+                    <TabContent id="Annotated" activeTab={activeTab}>
+                        Annotated Images
                     </TabContent>
                 </div>
             </div>

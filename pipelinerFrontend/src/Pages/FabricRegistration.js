@@ -9,6 +9,7 @@ const FabricRegistration = () => {
     const [fabricName, setFabricName] = useState("");
     const [fabricDetails, setFabricDetails] = useState("");
     const [fabricImages, setFabricImages] = useState([]);
+    const [labelColor, setLabelColor] = useState("#FFFF00");
 
     useEffect(() => {
         fetch(process.env.REACT_APP_SERVER + "/api/projectFecther")
@@ -132,7 +133,16 @@ const FabricRegistration = () => {
                             <div className="w-full px-2 group h-fit flex flex-nowrap gap-2 mb-3 mt-1.5 items-center justify-between">
                                 <input id="label1" name="label1" type="text" placeholder="Enter label 1 Name..." className="w-full rounded-lg px-3 py-1.5  bg-white text-black placeholder:text-black outline-none focus:outline-none" />
                                 <div className="w-10 h-9 overflow-hidden rounded-lg">
-                                    <input id="labelColor1" name="labelColor1" type="color" className="scale-150 h-full" value="#FFFF00"></input>
+                                    <input
+                                        id="labelColor1"
+                                        name="labelColor1"
+                                        type="color"
+                                        className="scale-150 h-full"
+                                        value={labelColor}
+                                        onChange={(event) => {
+                                            setLabelColor(event.currentTarget.value);
+                                        }}
+                                    ></input>
                                 </div>
                             </div>
                         </div>
@@ -194,10 +204,12 @@ const FabricRegistration = () => {
                                 </p>
                             </div>
                         </div>
+                        <div id="cover" className="hidden absolute top-0 left-0 bg-primary-200/80 animate-pulse h-full w-full rounded-md backdrop-blur-xl z-50"></div>
                     </div>
                     <div
                         onClick={(event) => {
                             event.target.classList.add("animate-pulse");
+                            document.getElementById("cover").classList.remove("hidden");
                             let labelContainer = document.getElementById("labelContainer");
                             let labels = [];
                             for (let i = 1; i < labelContainer.children.length; i++) {
@@ -234,8 +246,10 @@ const FabricRegistration = () => {
                                         event.target.classList.remove("animate-pulse");
                                         alert("Fabric Added Successfully");
                                         window.location.reload();
+                                        document.getElementById("cover").classList.remove("hidden");
                                     } else {
                                         alert(result["error"]);
+                                        document.getElementById("cover").classList.remove("hidden");
                                     }
                                 })
                                 .catch((error) => console.log("error", error));

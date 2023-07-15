@@ -4,11 +4,12 @@ import ImageAnnotationSidebar from "../Components/ImageAnnotationSidebar";
 import ImageAnnotationTools from "../Components/ImageAnnotationTools";
 
 const ImageAnnotation = () => {
-    const [mode, setMode] = useState("magic");
+    const [mode, setMode] = useState("polygon");
     const [tempShape, setTempShape] = useState([[]]);
     const [magicPoints, setMagicPoints] = useState([]);
     const [magicMode, setMagicMode] = useState(0);
     const [currentPolygonIndex, setCurrentPolygonIndex] = useState(0);
+    const [labels, setLabels] = useState([]);
     const dragIndexRef = useRef(null);
     const dragStartRef = useRef({ x: 0, y: 0 });
 
@@ -82,7 +83,9 @@ const ImageAnnotation = () => {
 
     function segmentImage(event) {
         if (mode === "polygon") {
+            console.log(mode);
             try {
+                console.log(dragIndexRef.current);
                 if (dragIndexRef.current == null) {
                     let corridates = {
                         x: event.nativeEvent.offsetX,
@@ -95,8 +98,14 @@ const ImageAnnotation = () => {
                         shapes = [...tempShape];
                     }
                     let currentShape = shapes[currentPolygonIndex];
+                    console.log(shapes);
                     if (corridates.x !== NaN && corridates.y !== NaN) {
-                        currentShape.push([corridates.x, corridates.y]);
+                        let annotationBox = document.getElementById("annotationBox");
+                        let annotationBoxWidth = annotationBox.clientWidth;
+                        let annotationBoxHeight = annotationBox.clientHeight;
+                        let corrPercentX = (corridates.x / annotationBoxWidth) * 100;
+                        let corrPercentY = (corridates.y / annotationBoxHeight) * 100;
+                        currentShape.push([corrPercentX, corrPercentY]);
                         setTempShape([...shapes]);
                     }
                 } else {
@@ -120,7 +129,7 @@ const ImageAnnotation = () => {
     }
     return (
         <div className="bg-primary-950 p-3 w-full h-[calc(100vh-7rem)] flex flex-nowrap gap-3 overflow-hidden">
-            <ImageAnnotationSidebar setTempShape={setTempShape} setMagicPoints={setMagicPoints} />
+            <ImageAnnotationSidebar setTempShape={setTempShape} setCurrentPolygonIndex={setCurrentPolygonIndex} setMagicPoints={setMagicPoints} labels={labels} setLabels={setLabels} />
             <div id="imageAnnotationMain" className="w-[80%] h-full bg-primary-900 rounded-lg inner-shadow overflow-hidden cursor-crosshair">
                 <div className="absolute top-0 left-0 w-full bg-primary-800/50"></div>
                 <div
@@ -158,15 +167,15 @@ const ImageAnnotation = () => {
                         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                     >
                         <div className="h-full w-full absolute top-0 left-0">
-                            <svg id={"annotationShape"} className="h-full w-full">
+                            <svg id="annotationShape" className="h-full w-full">
                                 {tempShape.map((shape, index) => (
-                                    <polygon id={"shape_" + index} fill="green" fillOpacity={0.5} stroke="var(--primary-500)" points={shape.map((point) => (point[0] !== undefined ? point[0] + "," + point[1] + " " : ""))} />
+                                    <polygon id={"shape_" + index} fill="green" fillOpacity={0.5} stroke="var(--primary-500)" points={shape.map((point) => (point[0] !== undefined ? (point[0] * document.getElementById("annotationBox").clientWidth) / 100 + "," + (point[1] * document.getElementById("annotationBox").clientHeight) / 100 + " " : ""))} />
                                 ))}
                             </svg>
                             {tempShape.map((shape, index) => (
                                 <>
                                     {shape.map((point, index2) => (
-                                        <div id={"annotationShape_" + index + "_" + index2} onMouseUp={() => handleMouseUp()} onMouseDown={(event) => handleMouseDown(index + "," + index2, event)} key={index2} style={{ left: point[0], top: point[1] }} className={"absolute h-2 w-2 border-2  -translate-x-1/2 -translate-y-1/2 rounded-full outline-offset-4 border-of cursor-move " + (index2 === 0 ? "border-red-500 scale-150 bg-red-500/50" : "border-primary-500 bg-primary-200/50")}></div>
+                                        <div id={"annotationShape_" + index + "_" + index2} onMouseUp={() => handleMouseUp()} onMouseDown={(event) => handleMouseDown(index + "," + index2, event)} key={index2} style={{ left: point[0] + "%", top: point[1] + "%" }} className={"absolute h-2 w-2 border-2  -translate-x-1/2 -translate-y-1/2 rounded-full outline-offset-4 border-of cursor-move " + (index2 === 0 ? "border-red-500 scale-150 bg-red-500/50" : "border-primary-500 bg-primary-200/50")}></div>
                                     ))}
                                 </>
                             ))}
@@ -257,6 +266,9 @@ const ImageAnnotation = () => {
                                             setTempShape([...tempShape, []]);
                                             document.getElementById("menu").classList.add("scale-y-0");
                                         }
+                                        if (document.getElementById("annotatorEditorContainer").classList.contains("scale-0")) {
+                                            document.getElementById("annotatorEditorContainer").classList.remove("scale-0");
+                                        }
                                     }}
                                     className="cursor-pointer"
                                 >
@@ -269,6 +281,7 @@ const ImageAnnotation = () => {
                                             tempData.pop();
                                             setTempShape([...tempData, []]);
                                         }
+                                        document.getElementById("annotatorEditorContainer").classList.add("scale-0");
                                     }}
                                     className="cursor-pointer"
                                 >
@@ -307,6 +320,67 @@ const ImageAnnotation = () => {
                                 <animate attributeName="stroke-dashoffset" repeatCount="indefinite" dur="3.571428571428571s" keyTimes="0;1" values="0;256.58892822265625" />
                             </path>
                         </svg>
+                    </div>
+                    <div id="annotatorEditorContainer" className="bg-primary-950 border border-gray-100/25 absolute top-4 left-4 h-max w-max rounded-xl transition-all duration-300 z-[60] overflow-hidden scale-0">
+                        <div className="flex items-center justify-between gap-4 text-white border-b border-gray-100/25 px-2 cursor-move">
+                            <p>Annotator Editor</p>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width={14}
+                                height={14}
+                                fill="#ffffff"
+                                className="cursor-pointer"
+                                viewBox="0 0 16 16"
+                                onClick={() => {
+                                    document.getElementById("annotatorEditorContainer").classList.toggle("scale-0");
+                                }}
+                            >
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
+                            </svg>
+                        </div>
+                        <div className="w-full px-2 my-2">
+                            <select id="labelConfirm" className="w-full p-1 rounded focus:outline-none">
+                                {labels.map((label, index) => (
+                                    <option key={index} value={label.color}>
+                                        {label.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex items-center justify-between px-2">
+                            <p
+                                className="border border-red-500 bg-red-200 text-red-800 rounded px-2 cursor-pointer"
+                                onClick={() => {
+                                    document.getElementById("annotatorEditorContainer").classList.toggle("scale-0");
+                                }}
+                            >
+                                Delete
+                            </p>
+                            <p
+                                className="border border-green-500 bg-green-200 text-green-800 rounded px-2 cursor-pointer"
+                                onClick={() => {
+                                    document.getElementById("annotatorEditorContainer").classList.toggle("scale-0");
+                                    let shapeLength = document.getElementById("annotationShape").childNodes.length;
+                                    document.getElementById("annotationShape").childNodes[shapeLength - 2].setAttribute("fill", document.getElementById("labelConfirm").value);
+                                }}
+                            >
+                                Save
+                            </p>
+                        </div>
+                        <div className="mt-2 border-t border-gray-100/25">
+                            {labels.map((label, index) => (
+                                <p
+                                    key={index}
+                                    onClick={() => {
+                                        document.getElementById("labelConfirm").value = label.color;
+                                    }}
+                                    className="px-2 font-semibold text-black cursor-pointer"
+                                    style={{ backgroundColor: label.color }}
+                                >
+                                    {label.name}
+                                </p>
+                            ))}
+                        </div>
                     </div>
                 </div>
                 <ImageAnnotationTools tempShape={tempShape} setTempShape={setTempShape} setMagicPoints={setMagicPoints} magicPoints={magicPoints} setMode={setMode} mode={mode} />

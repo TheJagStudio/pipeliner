@@ -2,21 +2,21 @@ import React, { useState, useEffect } from "react";
 
 const Navbar = () => {
     const [system, setSystem] = useState({ ram: 15, cpu: 15, vram: 15 });
-    useEffect(() => {
-        let systemInterval = setInterval(() => {
-            fetch(process.env.REACT_APP_SERVER + "/api/sysInfo/")
-                .then((res) => res.json())
-                .then((data) => {
-                    setSystem(data);
-                })
-                .catch((err) => console.log(err));
-        }, 20000);
-    }, []);
+    // useEffect(() => {
+    //     let systemInterval = setInterval(() => {
+    //         fetch(process.env.REACT_APP_SERVER + "/api/sysInfo/")
+    //             .then((res) => res.json())
+    //             .then((data) => {
+    //                 setSystem(data);
+    //             })
+    //             .catch((err) => console.log(err));
+    //     }, 20000);
+    // }, []);
     return (
         <div>
             <header className="flex justify-between h-14 items-center px-4 py-2 bg-primary-900">
                 <div className="flex flex-nowrap items-center justify-between">
-                    <svg
+                    {/* <svg
                         xmlns="http://www.w3.org/2000/svg"
                         style={{
                             transform: "none",
@@ -35,8 +35,10 @@ const Navbar = () => {
                                 <path id="p17OitDAFm" d="M803 2982 c-420 -2 -433 -3 -443 -22 -6 -12 -9 -68 -8 -137 l3 -118 60 -31 60 -30 6 -700 5 -699 31 -115 c69 -252 187 -455 346 -592 166 -142 355 -236 555 -275 71 -14 177 -18 572 -22 l485 -6 5 -55 5 -55 150 -5 c125 -5 152 -3 163 9 10 12 12 199 10 907 -2 491 -7 896 -11 900 -14 14 -148 17 -218 4 -72 -12 -87 -23 -115 -85 -23 -48 -39 -52 -98 -26 -25 12 -49 21 -54 21 -17 0 -139 98 -181 146 -66 75 -72 109 -69 399 l3 249 55 22 c51 20 56 25 62 60 3 22 4 87 1 146 l-6 108 -471 2 c-259 2 -665 2 -903 0z m145 -1529 c5 -10 12 -47 16 -83 11 -101 34 -176 88 -287 42 -88 60 -112 123 -171 122 -114 261 -175 427 -187 115 -9 127 -16 109 -75 -19 -62 -45 -74 -149 -65 -193 16 -318 67 -440 181 -154 143 -234 274 -272 449 -39 181 -39 223 2 243 36 17 86 14 96 -5z" />
                             </g>
                         </g>
-                    </svg>
-                    <h1 className="text-2xl text-white font-bold capitalize font-mono">IPELINER</h1>
+                    </svg> */}
+                    <h1 className="text-4xl text-white font-bold capitalize font-mono">
+                        <span className="text-primary-400">Fabric</span>Scan
+                    </h1>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="h-10 w-10 group rounded-full flex items-center justify-center relative" style={{ background: "conic-gradient(var(--primary-500) " + system["cpu"] * 3.6 + "deg,var(--primary-800) " + system["cpu"] * 3.6 + "deg)" }}>
@@ -74,7 +76,7 @@ const Navbar = () => {
                         Image Gallery
                     </a>
                 </div>
-                {/* <div className={(window.location.pathname === "/train" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                <div className={(window.location.pathname === "/train" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
                     <a href="/train" className="text-xl font-mono my-0.5 whitespace-nowrap">
                         Training Pipeline
                     </a>
@@ -83,7 +85,7 @@ const Navbar = () => {
                     <a href="/prediction" className="text-xl font-mono my-0.5 whitespace-nowrap">
                         Prediction Pipeline
                     </a>
-                </div> */}
+                </div>
 
                 {/* <div className={(window.location.pathname === "/text" ? "bg-primary-700 hover:bg-primary-600 text-white" : "text-primary-700") + " border-2 border-primary-700 transition-all duration-300 rounded-full px-4"}>
 					<a href="/text" className="text-xl font-mono my-0.5 whitespace-nowrap">
