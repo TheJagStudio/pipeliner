@@ -46,15 +46,6 @@ After activating virtualenv you need to install all project dependencies:
 
 # Getting Started
 
-First clone the repository from Github and switch to the new directory:
-
-    $ git clone https://github.com/TheJagStudio/pipeliner
-    $ cd .\pipeliner\pipelinerBackend\
-    
-Activate the virtualenv for your project.
-
-    $ python3 myprojectenv/bin/activate
-
 You can now run the development server:
 
     $ python manage.py runserver
