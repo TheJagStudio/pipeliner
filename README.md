@@ -34,7 +34,7 @@ To create a virtualenv  change into a directory where you store your project fil
 	$ python3 -m venv myprojectenv
 After creating virtualenv you need to activate that virtualenv.
 
-	$ python3 myprojectenv/bin/activate
+	$ source myprojectenv/bin/activate
 
 After activating virtualenv you need to install all project dependencies:
 
