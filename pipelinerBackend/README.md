@@ -34,7 +34,7 @@ To create a virtualenv  change into a directory where you store your project fil
 	$ python3 -m venv myprojectenv
 After creating virtualenv you need to activate that virtualenv.
 
-	$ python3 myprojectenv/bin/activate
+	$ source myprojectenv/bin/activate
 
 After activating virtualenv you need to install all project dependencies:
 
@@ -45,15 +45,6 @@ After activating virtualenv you need to install all project dependencies:
 #  Fabric Scan 
 
 # Getting Started
-
-First clone the repository from Github and switch to the new directory:
-
-    $ git clone https://github.com/TheJagStudio/pipeliner
-    $ cd .\pipeliner\pipelinerBackend\
-    
-Activate the virtualenv for your project.
-
-    	$ python3 myprojectenv/bin/activate
 
 You can now run the development server:
 

@@ -39,7 +39,7 @@ gitdb==4.0.10
 GitPython==3.1.31
 idna==3.4
 ipykernel==6.23.2
-ipython==8.14.0
+ipython
 isoduration==20.11.0
 jedi==0.18.2
 Jinja2==3.1.2
