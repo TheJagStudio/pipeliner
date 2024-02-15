@@ -1,0 +1,10 @@
+
+pipelinerBackend/projects/DjangoDemo/models/newModel/weights/best_saved_model/saved_model.pb
+pipelinerBackend/baseModels/FastSAM.pt
+pipelinerBackend/baseModels/readme.txt
+pipelinerBackend/baseModels/yolov8x-seg.pt
+pipelinerBackend/baseModels/readme.txt
+pipelinerBackend/projects/DjangoDemo/models/newModel/weights/best.onnx
+pipelinerBackend/projects/DjangoDemo/models/newModel/weights/best_saved_model/fingerprint.pb
+pipelinerBackend/projects/DjangoDemo/models/newModel/weights/best_saved_model/best_float32.tflite
+pipelinerBackend/baseModels/readme.txt
