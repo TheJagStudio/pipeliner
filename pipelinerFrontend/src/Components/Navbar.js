@@ -1,43 +1,29 @@
 import React, { useState, useEffect } from "react";
 
 const Navbar = () => {
-    const [system, setSystem] = useState({ ram: 15, cpu: 15, vram: 15 });
-    // useEffect(() => {
-    //     let systemInterval = setInterval(() => {
-    //         fetch(process.env.REACT_APP_SERVER + "/api/sysInfo/")
-    //             .then((res) => res.json())
-    //             .then((data) => {
-    //                 setSystem(data);
-    //             })
-    //             .catch((err) => console.log(err));
-    //     }, 20000);
-    // }, []);
+    const [system, setSystem] = useState({ ram: 15, cpu: 15 });
+    useEffect(() => {
+        let systemInterval = setInterval(() => {
+            fetch(process.env.REACT_APP_SERVER + "/api/sysInfo/")
+                .then((res) => res.json())
+                .then((data) => {
+                    setSystem(data);
+                })
+                .catch((err) => {
+                    setSystem({ ram: 15, cpu: 15 });
+                });
+        }, 5000);
+    }, []);
     return (
         <div>
             <header className="flex justify-between h-14 items-center px-4 py-2 bg-primary-900">
                 <div className="flex flex-nowrap items-center justify-between">
-                    {/* <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        style={{
-                            transform: "none",
-                            transformOrigin: "50% 50%",
-                            cursor: "move",
-                        }}
-                        width={30}
-                        height={30}
-                        viewBox="0 0 7030 8600"
-                        className="text-white"
-                    >
-                        <g fill="currentColor">
-                            <g>
-                                <path id="p3Lh8sS1f" d="M350 8136 c0 -148 -1 -146 68 -167 30 -9 47 -20 53 -37 14 -36 12 -4439 -2 -4448 -6 -4 -35 -12 -63 -18 l-51 -11 0 -150 0 -150 905 4 c498 2 908 6 912 10 4 4 12 63 17 131 11 146 9 150 -79 172 l-55 14 -7 675 c-4 371 -4 1367 -1 2214 l6 1539 21 18 c12 9 33 20 49 23 52 12 57 25 57 164 0 85 -4 131 -12 139 -9 9 -226 12 -915 12 l-903 0 0 -134z m601 -212 c10 -13 13 -424 17 -2213 4 -2015 3 -2198 -12 -2210 -17 -14 -119 -12 -133 3 -9 9 -7 4377 2 4405 6 19 23 24 91 29 12 1 27 -5 35 -14z" />
-                                <path id="pk8WxuEtA" d="M2395 5853 c-22 -3 -43 -10 -47 -16 -9 -15 -11 -1685 -2 -1751 l7 -47 141 3 140 3 17 45 17 45 243 8 c134 4 451 6 704 5 l460 -3 95 -33 c253 -88 432 -222 610 -456 132 -176 220 -443 221 -672 0 -130 -52 -354 -111 -481 -117 -251 -305 -444 -550 -568 -206 -103 -272 -115 -692 -122 l-338 -6 0 33 c0 23 -9 41 -34 66 l-34 34 -125 0 c-69 0 -128 -4 -131 -8 -3 -5 -8 -411 -12 -904 l-7 -895 39 -7 c21 -4 86 -9 144 -13 122 -6 135 0 148 78 l8 44 409 6 c443 6 498 11 711 64 336 83 680 235 934 413 198 138 489 408 619 572 61 77 181 245 181 254 0 2 23 43 51 92 178 308 288 641 339 1029 40 297 13 721 -62 990 -54 197 -154 453 -222 573 -20 35 -36 66 -36 68 0 2 -28 50 -61 106 -88 147 -208 303 -353 459 -155 167 -276 271 -446 384 -25 16 -61 42 -80 57 -57 44 -282 160 -390 202 -36 13 -83 32 -105 42 -69 30 -168 65 -215 75 -25 5 -61 15 -80 23 -69 27 -365 75 -530 85 -91 6 -413 11 -716 11 l-551 0 -52 60 -52 60 -82 -2 c-45 -1 -100 -3 -122 -5z m1488 -1232 c11 -8 17 -28 17 -52 0 -73 25 -70 -625 -70 -318 0 -580 3 -584 6 -3 4 -6 29 -6 57 0 84 -39 79 611 76 466 -2 574 -6 587 -17z m2302 -1557 c76 -30 55 -373 -47 -754 -86 -321 -238 -603 -489 -904 -350 -419 -914 -726 -1490 -810 -122 -18 -324 -21 -366 -5 -34 13 -43 25 -43 66 0 49 21 63 96 63 87 0 318 26 443 50 183 35 314 82 556 200 359 176 696 484 904 828 213 353 310 681 345 1166 7 91 34 121 91 100z" />
-                                <path id="p17OitDAFm" d="M803 2982 c-420 -2 -433 -3 -443 -22 -6 -12 -9 -68 -8 -137 l3 -118 60 -31 60 -30 6 -700 5 -699 31 -115 c69 -252 187 -455 346 -592 166 -142 355 -236 555 -275 71 -14 177 -18 572 -22 l485 -6 5 -55 5 -55 150 -5 c125 -5 152 -3 163 9 10 12 12 199 10 907 -2 491 -7 896 -11 900 -14 14 -148 17 -218 4 -72 -12 -87 -23 -115 -85 -23 -48 -39 -52 -98 -26 -25 12 -49 21 -54 21 -17 0 -139 98 -181 146 -66 75 -72 109 -69 399 l3 249 55 22 c51 20 56 25 62 60 3 22 4 87 1 146 l-6 108 -471 2 c-259 2 -665 2 -903 0z m145 -1529 c5 -10 12 -47 16 -83 11 -101 34 -176 88 -287 42 -88 60 -112 123 -171 122 -114 261 -175 427 -187 115 -9 127 -16 109 -75 -19 -62 -45 -74 -149 -65 -193 16 -318 67 -440 181 -154 143 -234 274 -272 449 -39 181 -39 223 2 243 36 17 86 14 96 -5z" />
-                            </g>
-                        </g>
-                    </svg> */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width={45} height={45} viewBox="0 0 320 320">
+                        <path d="M100.75 303.2v-3.825l-5.45-2.725C78 288 65.45 278.7 51.925 264.525c-17.9-18.775-31.3-43.95-37-69.65-4.225-19-4.75-39.275-1.525-58.625 3.75-22.525 13.875-46.075 27.725-64.475 3.85-5.125 8.4-10.3 14.25-16.25C63.1 47.7 69.25 42.6 78.25 36.6c20.225-13.475 43.225-21.85 67.25-24.475 4.9-.55 20.625-.775 26.875-.4 5.8.35 7.975.6 13.75 1.55 18.3 3.05 34.275 8.725 50.5 18 8.95 5.1 18.6 12.125 26.825 19.55l1.3 1.175h-38.575l-2.65-1.475c-14.625-8.125-31.45-13.5-48.275-15.4-7.475-.85-21.55-.725-29.25.275-28.5 3.65-55.225 16.975-75.25 37.5C62.825 81.025 58.025 87.275 52.2 97c-4.5 7.525-6.275 11.15-9.725 20.2-5.55 14.425-8.3 31.175-7.9 47.8.25 9.65 1.35 18 3.575 27C45 219.775 60.9 244.325 83.5 262.025c6.45 5.05 16.4 11.4 16.95 10.85.25-.225.375-67.5.175-72.8l-.175-4.325H63.5v-3.8c0-5.6.425-10.425 1.125-13.425 1.725-7.15 5.35-13.5 10.75-18.9 5.7-5.725 11.225-8.825 19.5-11.025l3.25-.85h143.7l-.175 6.075c-.175 6.8-.5 9.2-1.65 12.75-2.575 7.95-5.45 12.7-10.925 17.925-5.8 5.575-13.5 9.375-21.325 10.525-1.225.175-11.65.325-30.3.45-15.625.075-28.475.2-28.525.275-.075.075-.2 13.525-.3 29.875-.2 35.225-.325 40.425-1.225 44-2.175 8.775-6.075 16.05-11.975 22.3-7.65 8.1-17.725 13.225-28.875 14.7-1.55.2-3.5.375-4.325.375h-1.475v-3.8z" fill="#FFF" />
+                        <path d="M151.25 311.75c-2.4-.1-5.675-.375-7.25-.575-5.875-.8-14.25-2.3-14.175-2.525.05-.125 1.225-.875 2.625-1.625 6.775-3.725 13.05-9.425 17.2-15.675l1.725-2.575 8.775-.025c9.325 0 13.1-.2 18.725-1.025 28.25-4.075 53.075-16.375 72.75-36.1 11.675-11.65 20.75-25.1 27.325-40.5 8.975-21 12-45.225 8.525-68.375-2.225-14.75-7.125-29.275-14.225-42.175-2.775-5.025-4.2-7.325-4.55-7.325-.125 0-1.55 1.325-3.15 2.95-7.175 7.275-14.9 11.525-25.475 14.075l-3.05.725h-20.1c-11.05 0-30.9.075-44.1.175l-24.025.15-.15 7.025c-.1 3.875-.225 7.45-.3 7.975l-.15.925h-47.525l.15-10.3c.1-5.675.275-11.225.425-12.325C102.325 96.55 106.175 87.8 111.675 81c1.95-2.4 5.9-6.225 8.325-8.025 5.425-4.075 12.625-7.35 19.575-8.95 1.975-.475 4.475-.5 70.75-.675L279 63.175v4.075l2.475 3.3c16.9 22.725 26.475 46.8 29.8 75.05 1.025 8.6.875 26.025-.275 35.1-.95 7.25-3.175 17.5-5.475 25.05-2.5 8.225-4.95 14.35-9.15 22.875-7.55 15.325-15.925 26.95-28.25 39.25-7.15 7.15-12.175 11.425-19.85 16.925-19.8 14.125-44.875 23.65-69.65 26.425-5.175.575-19.9.85-27.375.525z" fill="#569CDC" />
+                    </svg>
                     <h1 className="text-4xl text-white font-bold capitalize font-mono">
-                        <span className="text-primary-400">Fabric</span>Scan
+                        <span className="text-primary-400 normal-case">abric</span>Scan
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
@@ -47,43 +33,49 @@ const Navbar = () => {
                     </div>
                     <div className="h-10 w-10 group rounded-full flex items-center justify-center relative" style={{ background: "conic-gradient(var(--primary-500) " + system["ram"] * 3.6 + "deg,var(--primary-800) " + system["ram"] * 3.6 + "deg)" }}>
                         <div className="h-8 w-8 rounded-full bg-primary-900 text-white p-2 text-xs flex item-center justify-center">RAM</div>
-                        <div className="absolute scale-y-0 group-hover:scale-y-100 origin-top text-sm text-white top-14 bg-primary-800 w-max rounded-md px-2 transition-all">RAM usage : {system["ram"]}%</div>
-                    </div>
-                    <div className="h-10 w-10 group rounded-full flex items-center justify-center relative" style={{ background: "conic-gradient(var(--primary-500) " + system["vram"] * 3.6 + "deg,var(--primary-800) " + system["vram"] * 3.6 + "deg)" }}>
-                        <div className="h-8 w-8 rounded-full bg-primary-900 text-white p-2 text-xs flex item-center justify-center">VRAM</div>
-                        <div className="absolute scale-y-0 group-hover:scale-y-100 origin-top text-sm text-white top-14 bg-primary-800 w-max rounded-md px-2 transition-all -translate-x-1/2">VRAM usage : {system["vram"]}%</div>
+                        <div className="absolute right-0 scale-y-0 group-hover:scale-y-100 -translate-y-1/2 origin-top text-sm text-white top-14 bg-primary-800 w-max rounded-md px-2 transition-all">RAM usage : {system["ram"]}%</div>
                     </div>
                 </div>
             </header>
             <div className="flex px-2 gap-2 noScroll flex-nowrap overflow-x-scroll items-center h-fit py-1 w-full mt-2 drop-shadow-lg">
-                <div className={(window.location.pathname === "/" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                <div className={(window.location.pathname === "/" || window.location.pathname.includes("project") ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
                     <a href="/" className="text-xl font-mono my-0.5 whitespace-nowrap">
-                        Fabric Registration
+                        Projects
                     </a>
                 </div>
-                <div className={(window.location.pathname === "/annotator-allocation" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                <div className={(window.location.pathname === "/registration" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
+                    <a href="/registration" className="text-xl font-mono my-0.5 whitespace-nowrap">
+                        Registration
+                    </a>
+                </div>
+                {/* <div className={(window.location.pathname === "/annotator-allocation" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
                     <a href="/annotator-allocation" className="text-xl font-mono my-0.5 whitespace-nowrap">
                         Annotator Allocation
                     </a>
-                </div>
-                <div className={(window.location.pathname === "/image-annotation" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                </div> */}
+                <div className={(window.location.pathname === "/image-annotation" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
                     <a href="/image-annotation" className="text-xl font-mono my-0.5 whitespace-nowrap">
                         Image Annotation
                     </a>
                 </div>
-                <div className={(window.location.pathname === "/image-gallery" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                {/* <div className={(window.location.pathname === "/image-gallery" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
                     <a href="/image-gallery" className="text-xl font-mono my-0.5 whitespace-nowrap">
                         Image Gallery
                     </a>
-                </div>
-                <div className={(window.location.pathname === "/train" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                </div> */}
+                <div className={(window.location.pathname === "/train" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
                     <a href="/train" className="text-xl font-mono my-0.5 whitespace-nowrap">
-                        Training Pipeline
+                        Training
                     </a>
                 </div>
-                <div className={(window.location.pathname === "/prediction" ? "bg-primary-600 hover:bg-primary-50 text-white hover:text-primary-800" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4"}>
+                <div className={(window.location.pathname === "/prediction" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
                     <a href="/prediction" className="text-xl font-mono my-0.5 whitespace-nowrap">
-                        Prediction Pipeline
+                        Prediction
+                    </a>
+                </div>
+                <div className={(window.location.pathname === "/realtime" ? "bg-primary-600  text-white" : "text-primary-500") + " border-2 border-primary-800 transition-all duration-300 rounded-full px-4 hover:bg-primary-500  hover:text-white"}>
+                    <a href="/realtime" className="text-xl font-mono my-0.5 whitespace-nowrap">
+                        Realtime
                     </a>
                 </div>
 

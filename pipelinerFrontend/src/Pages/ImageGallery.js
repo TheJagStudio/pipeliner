@@ -7,8 +7,6 @@ const ImageGallery = () => {
     const [activeTab, setActiveTab] = useState("Train");
     const [projects, setProjects] = useState([]);
     const [datasets, setDatasets] = useState([]);
-    const [project, setProject] = useState("");
-    const [dataset, setDataset] = useState("");
     const [testImages, setTestImages] = useState([]);
     const [trainImages, setTrainImages] = useState([]);
     const [valImages, setValImages] = useState([]);
@@ -28,6 +26,34 @@ const ImageGallery = () => {
             .then((data) => {
                 setAnnotators(data["data"]);
             });
+        let project = localStorage.getItem("project");
+        let dataset = localStorage.getItem("dataset");
+        if (project !== null && dataset !== null) {
+            fetch(process.env.REACT_APP_SERVER + "/api/imageGallery?project=" + project + "&dataset=" + dataset)
+                .then((res) => res.json())
+                .then((data) => {
+                    setTrainImages(data.train);
+                    setTestImages(data.test);
+                    setValImages(data.valid);
+                    let arr = [];
+                    for (let i = 0; i < data.train.length; i++) {
+                        arr.push([process.env.REACT_APP_SERVER + "/static/" + data.train[i], data.train[i]]);
+                    }
+                    setSwiperArr(arr);
+                    localStorage.removeItem("project");
+                    localStorage.removeItem("dataset");
+                    let newOption = document.createElement("option");
+                    newOption.value = project;
+                    newOption.innerHTML = project;
+                    document.getElementById("project").appendChild(newOption);
+                    document.getElementById("project").value = project;
+                    let newOption2 = document.createElement("option");
+                    newOption2.value = dataset;
+                    newOption2.innerHTML = dataset;
+                    document.getElementById("dataset").appendChild(newOption2);
+                    document.getElementById("dataset").value = dataset;
+                });
+        }
     }, []);
     return (
         <div className="mt-4 w-[80%] text-white mx-auto">
@@ -40,7 +66,6 @@ const ImageGallery = () => {
                             <select
                                 onChange={() => {
                                     let project = document.getElementById("project").value;
-                                    setProject(project);
                                     if (project === "") {
                                         setDatasets([]);
                                     } else {
@@ -94,16 +119,7 @@ const ImageGallery = () => {
                     <label className="block text-sm">
                         <span>Path to Dataset</span>
                         <span className="relative mt-1.5 flex">
-                            <select
-                                onChange={() => {
-                                    let dataset = document.getElementById("dataset").value;
-                                    setDataset(dataset);
-                                }}
-                                required
-                                id="dataset"
-                                name="dataset"
-                                className="form-input outline-none peer w-full rounded-lg border border-slate-300 bg-white text-black px-3 py-2 pl-9 placeholder:font-light hover:border-secondary-700 focus:border-secondary dark:border-navy-450 dark:hover:border-navy-400 dark:focus:border-accent"
-                            >
+                            <select required id="dataset" name="dataset" className="form-input outline-none peer w-full rounded-lg border border-slate-300 bg-white text-black px-3 py-2 pl-9 placeholder:font-light hover:border-secondary-700 focus:border-secondary dark:border-navy-450 dark:hover:border-navy-400 dark:focus:border-accent">
                                 <option selected value="">
                                     --Select Dataset--
                                 </option>
@@ -185,7 +201,7 @@ const ImageGallery = () => {
                             </ul>
                             <label className="block text-sm">
                                 <span className="relative flex">
-                                    <select id="Annotator" name="Annotator" className="form-input outline-none peer w-72 rounded-lg border bg-white border-slate-300 bg-transparent px-3 py-2 text-sm text-black hover:border-secondary-700 focus:border-secondary ">
+                                    {/* <select id="Annotator" name="Annotator" className="form-input outline-none peer w-72 rounded-lg border bg-white border-slate-300 bg-transparent px-3 py-2 text-sm text-black hover:border-secondary-700 focus:border-secondary ">
                                         <option selected value="">
                                             --Select Annotator--
                                         </option>
@@ -194,7 +210,7 @@ const ImageGallery = () => {
                                                 {item[1]}
                                             </option>
                                         ))}
-                                    </select>
+                                    </select> */}
                                 </span>
                             </label>
                         </div>
@@ -212,9 +228,7 @@ const ImageGallery = () => {
                                                     document.getElementById("imageModelContainer").classList.remove("scale-0", "opacity-0");
                                                 }}
                                             />
-                                            <div className="bg-primary-500 text-white font-bold absolute top-[5px] left-[5px] rounded-full p-1 px-2.5">
-                                                <p>{(index % annotators.length) + 1}</p>
-                                            </div>
+                                            {/* <div className="bg-primary-500 text-white font-bold absolute top-[5px] left-[5px] rounded-full aspect-square p-1 px-2.5"><p>{(index % annotators.length) + 1}</p></div> */}
                                         </div>
                                     ))}
                                 </div>
@@ -232,9 +246,9 @@ const ImageGallery = () => {
                                                     document.getElementById("imageModelContainer").classList.remove("scale-0", "opacity-0");
                                                 }}
                                             />
-                                            <div className="bg-primary-500 text-white font-bold absolute top-[5px] left-[5px] rounded-full p-1 px-2.5">
+                                            {/* <div className="bg-primary-500 text-white font-bold absolute top-[5px] left-[5px] rounded-full p-1 px-2.5">
                                                 <p>{(index % annotators.length) + 1}</p>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     ))}
                                 </div>
@@ -252,9 +266,9 @@ const ImageGallery = () => {
                                                     document.getElementById("imageModelContainer").classList.remove("scale-0", "opacity-0");
                                                 }}
                                             />
-                                            <div className="bg-primary-500 text-white font-bold absolute top-[5px] left-[5px] rounded-full p-1 px-2.5">
+                                            {/* <div className="bg-primary-500 text-white font-bold absolute top-[5px] left-[5px] rounded-full p-1 px-2.5">
                                                 <p>{(index % annotators.length) + 1}</p>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     ))}
                                 </div>

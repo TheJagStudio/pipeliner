@@ -13,6 +13,7 @@ const TrainForm = () => {
     const [modelName, setModelName] = useState("");
     const [datasetName, setDatasetName] = useState("");
     const [datasets, setDatasets] = useState([]);
+    const [resume, setResume] = useState(false);
 
     const wrapperRef = useRef(null);
 
@@ -27,6 +28,22 @@ const TrainForm = () => {
     });
 
     useEffect(() => {
+        let project = localStorage.getItem("project");
+        let dataset = localStorage.getItem("dataset");
+        if (project !== null && dataset !== null) {
+            localStorage.removeItem("project");
+            localStorage.removeItem("dataset");
+            let newOption = document.createElement("option");
+            newOption.value = project;
+            newOption.innerHTML = project;
+            document.getElementById("project").appendChild(newOption);
+            document.getElementById("project").value = project;
+            let newOption2 = document.createElement("option");
+            newOption2.value = dataset;
+            newOption2.innerHTML = dataset;
+            document.getElementById("dataset").appendChild(newOption2);
+            document.getElementById("dataset").value = dataset;
+        }
         fetch(process.env.REACT_APP_SERVER + "/api/projectFecther")
             .then((res) => res.json())
             .then((data) => {
@@ -39,8 +56,8 @@ const TrainForm = () => {
             });
     }, []);
     return (
-        <div className="min-h-screen h-full mb-5">
-            <div className="lg:w-[80%] w-full h-full text-white mx-auto mt-5 backdrop-blur-xl rounded-none lg:rounded-xl overflow-hidden">
+        <div className="min-h-screen w-[calc(100%-2rem)] mx-auto h-full mb-5">
+            <div className="w-full h-full text-white mx-auto mt-5 backdrop-blur-xl rounded-none lg:rounded-xl overflow-hidden">
                 <div className="mt-4 ">
                     <div className="grid grid-cols-2 gap-4 gap-y-1 relative mb-5 overflow-hidden">
                         <div className="grid grid-rows-3 gap-4 gap-y-1 h-64 border border-primary-500 rounded-lg p-2">
@@ -63,6 +80,16 @@ const TrainForm = () => {
                                                         } else {
                                                             setDatasets([]);
                                                             alert(data["error"]);
+                                                        }
+                                                    });
+
+                                                fetch(process.env.REACT_APP_SERVER + "/api/basemodelFecther?project=" + project)
+                                                    .then((res) => res.json())
+                                                    .then((data) => {
+                                                        setModels(data["data"]);
+                                                        if (document.getElementById("resume").classList.contains("hidden")) {
+                                                            document.getElementById("resume").classList.remove("hidden");
+                                                            document.getElementById("resume").classList.add("flex");
                                                         }
                                                     });
                                             }
@@ -143,8 +170,22 @@ const TrainForm = () => {
                                 <p className="font-mono font-meduim">Click Here To Refresh Project List</p>
                             </div>
                         </div>
-                        <div className="grid grid-rows-3 gap-4 gap-y-1 h-64 border border-primary-500 rounded-lg p-2">
-                            <div className="grid grid-cols-2 gap-4 mt-3">
+                        <div className="flex flex-col justify-between gap-3 gap-y-1 h-64 border border-primary-500 rounded-lg p-2">
+                            <div id="resume" className="items-center justify-end gap-3 hidden">
+                                <p>Resume</p>
+                                <label className="relative w-10 h-5">
+                                    <input
+                                        type="checkbox"
+                                        defaultChecked={resume}
+                                        onClick={() => {
+                                            setResume(!resume);
+                                        }}
+                                        className="peer w-11 h-2 opacity-0"
+                                    />
+                                    <span className="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-primary-800 transition-all duration-300 rounded-full before:absolute before:h-3 before:w-3 before:bg-white before:content-[''] before:left-[4px] before:top-1/2 before:-translate-y-1/2 before:rounded-full before:transition-all before:duration-300 peer-checked:bg-green-500 peer-checked:before:translate-x-[20px]" />
+                                </label>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="w-full">
                                     <p>Model Name</p>
                                     <input
@@ -174,11 +215,29 @@ const TrainForm = () => {
                                             <option selected disabled value="">
                                                 --Select Model--
                                             </option>
-                                            {models.map((model, index) => (
-                                                <option key={index} value={model}>
-                                                    {model}
-                                                </option>
-                                            ))}
+                                            {resume
+                                                ? models?.projectModel?.map((model, index) => (
+                                                      <option key={index} value={model}>
+                                                          {model}
+                                                      </option>
+                                                  ))
+                                                : models?.baseModel?.map((model, index) => (
+                                                      <option key={index} value={model}>
+                                                          {model}
+                                                      </option>
+                                                  ))}
+                                            {/* {resume &&
+                                                models?.projectModel?.map((model, index) => (
+                                                    <option key={index} value={model}>
+                                                        {model}
+                                                    </option>
+                                                ))}
+                                            {!resume &&
+                                                models?.baseModel?.map((model, index) => (
+                                                    <option key={index} value={model}>
+                                                        {model}
+                                                    </option>
+                                                ))} */}
                                         </select>
                                         <span className="pointer-events-none absolute flex h-full w-10 items-center justify-center text-secondary-700 peer-focus:text-secondary dark:text-navy-300 dark:peer-focus:text-accent">
                                             <svg fill="currentColor" width="1.2em" height="1.2em" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -254,6 +313,7 @@ const TrainForm = () => {
                                     formdata.append("baseModel", baseModel);
                                     formdata.append("imgsz", imageSize);
                                     formdata.append("name", modelName);
+                                    formdata.append("resume", resume);
 
                                     var requestOptions = {
                                         method: "POST",
@@ -276,31 +336,35 @@ const TrainForm = () => {
                                         })
                                         .catch((error) => console.log("error", error));
                                     let resultInterval = setInterval(() => {
-                                        fetch(process.env.REACT_APP_SERVER + "/api/modelDetails?project=" + projectName + "&model=" + modelName)
-                                            .then((res) => res.json())
-                                            .then((data) => {
-                                                // check if data has error key
-                                                if (data["error"] === undefined) {
-                                                    setTableData(data["data"]);
-                                                    grid.render(wrapperRef.current);
-                                                    grid.updateConfig({
-                                                        data: data["data"],
-                                                        sort: true,
-                                                        pagination: {
-                                                            limit: 10,
-                                                            summary: true,
-                                                        },
-                                                    }).forceRender();
-                                                } else {
-                                                    setTableData([]);
-                                                }
-                                            })
-                                            .catch((err) => {
-                                                console.log(err);
-                                            });
+                                        try {
+                                            fetch(process.env.REACT_APP_SERVER + "/api/modelDetails?project=" + projectName + "&model=" + modelName)
+                                                .then((res) => res.json())
+                                                .then((data) => {
+                                                    // check if data has error key
+                                                    if (data["error"] === undefined) {
+                                                        setTableData(data["data"]);
+                                                        grid.render(wrapperRef.current);
+                                                        grid.updateConfig({
+                                                            data: data["data"],
+                                                            sort: true,
+                                                            pagination: {
+                                                                limit: 10,
+                                                                summary: true,
+                                                            },
+                                                        }).forceRender();
+                                                    } else {
+                                                        setTableData([]);
+                                                    }
+                                                })
+                                                .catch((err) => {
+                                                    console.log(err);
+                                                });
+                                        } catch (err) {
+                                            console.log(err);
+                                        }
                                     }, 10000);
                                 }}
-                                className="bg-primary-800 rounded-lg flex items-center justify-center cursor-pointer hover:bg-primary-800/50 transition-all duration-3"
+                                className="bg-primary-800 rounded-lg flex items-center justify-center cursor-pointer hover:bg-primary-800/50 transition-all duration-3 h-10 mt-3"
                             >
                                 <p className="font-mono font-meduim">Train</p>
                             </div>

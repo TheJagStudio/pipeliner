@@ -41,7 +41,7 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabel
                 </div>
                 <a href="https://www.cvat.ai/" target="_blank">
                     <div className="">
-                        {/* <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
+                        {/* <img src=process.env.REACT_APP_SERVER + "/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
                         <button className="h-10 rounded shadow-xl overflow-hidden bg-primary-800 text-white w-20 flex flex-nowrap justify-center items-center gap-2">
                             Train
                             <svg width={18} height={18} fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -52,7 +52,7 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabel
                 </a>
                 <a href="https://www.cvat.ai/" target="_blank">
                     <div className="">
-                        {/* <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
+                        {/* <img src=process.env.REACT_APP_SERVER + "/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
                         <button className="h-10 rounded shadow-xl overflow-hidden bg-primary-800 text-white w-20 flex flex-nowrap justify-center items-center gap-2">
                             Test
                             <svg width={18} height={18} fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -63,7 +63,7 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabel
                 </a>
                 <a href="https://www.cvat.ai/" target="_blank">
                     <div className="">
-                        {/* <img src="/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
+                        {/* <img src=process.env.REACT_APP_SERVER + "/static/CVAT-Logo.jpg" alt="error" className="h-full rounded-lg shadow-xl overflow-hidden" /> */}
                         <button className="h-10 rounded shadow-xl overflow-hidden bg-primary-800 text-white w-20 flex flex-nowrap justify-center items-center gap-2">
                             Valid
                             <svg width={18} height={18} fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -144,15 +144,18 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabel
                                     fetch(process.env.REACT_APP_SERVER + "/api/taskDetails?project=" + project + "&dataset=" + dataset)
                                         .then((res) => res.json())
                                         .then((data) => {
+                                            console.log(data);
                                             if (!data.hasOwnProperty("error")) {
-                                                let taskDetails = JSON.parse(data["tasks"]);
+                                                let taskDetails = data["tasks"];
                                                 let labels = data["labels"];
-                                                let cvatLink = document.getElementById("cvatLink");
-                                                cvatLink.childNodes[1].href = "https://app.cvat.ai/tasks/" + taskDetails["train"];
-                                                cvatLink.childNodes[2].href = "https://app.cvat.ai/tasks/" + taskDetails["test"];
-                                                cvatLink.childNodes[3].href = "https://app.cvat.ai/tasks/" + taskDetails["valid"];
-                                                cvatLink.classList.remove("scale-0");
                                                 setLabels(labels);
+                                                try {
+                                                    let cvatLink = document.getElementById("cvatLink");
+                                                    cvatLink.childNodes[1].href = "https://app.cvat.ai/tasks/" + taskDetails["train"];
+                                                    cvatLink.childNodes[2].href = "https://app.cvat.ai/tasks/" + taskDetails["test"];
+                                                    cvatLink.childNodes[3].href = "https://app.cvat.ai/tasks/" + taskDetails["valid"];
+                                                    cvatLink.classList.remove("scale-0");
+                                                } catch (err) {}
                                             }
                                         })
                                         .catch((err) => {

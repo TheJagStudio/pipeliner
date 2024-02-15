@@ -15,4 +15,7 @@ urlpatterns = [
     path(
         "annotator-allocation/", views.annotatorAllocation, name="annotatorAllocation"
     ),
+    path("<str:one>/", views.main1, name="one"),
+    path("<str:one>/<str:two>/", views.main2, name="two"),
+    path("<str:one>/<str:two>/<str:three>/", views.main3, name="three"),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

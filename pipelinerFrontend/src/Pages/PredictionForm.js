@@ -16,6 +16,108 @@ const PredictionForm = () => {
             });
     }, []);
 
+    function cameraLoop(event) {
+        event.target.classList.add("animate-pulse");
+        if (document.getElementById("project").value === "" || document.getElementById("model").value === "") {
+            alert("Please select a project and model");
+        } else {
+            var formdata = new FormData();
+            formdata.append("projectName", document.getElementById("project").value);
+            formdata.append("modelName", document.getElementById("model").value);
+            formdata.append("inputSource", activeTab);
+            formdata.append("cameraIndex", document.getElementById("cameraSelect").value);
+
+            var requestOptions = {
+                method: "POST",
+                body: formdata,
+                redirect: "follow",
+            };
+            fetch(process.env.REACT_APP_SERVER + "/api/prediction/", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    if (result.status === "success") {
+                        document.getElementById("outputImage").src = "data:image/jpg;base64," + result["path"];
+                        document.getElementById("predictInfo").innerText = result["results"];
+
+                        cameraLoop(event);
+                    } else {
+                        alert(result["error"]);
+                    }
+                })
+                .catch((error) => console.log("error", error))
+                .finally(() => {
+                    event.target.classList.remove("animate-pulse");
+                });
+        }
+    }
+
+    // let cameraInput = document.getElementById("video");
+    // // render the video to canvas
+    // let canvas = document.createElement("canvas");
+    // canvas.width = cameraInput.videoWidth;
+    // canvas.height = cameraInput.videoHeight;
+    // canvas.getContext("2d").drawImage(cameraInput, 0, 0);
+    // canvas.toBlob((blob) => {
+    //     // create a file from the blob
+    //     let fileInput = new File([blob], "camera.jpg", { type: "image/jpeg" });
+    //     formdata.append("camera", fileInput, "camera.jpg");
+    //     var requestOptions = {
+    //         method: "POST",
+    //         body: formdata,
+    //         redirect: "follow",
+    //     };
+
+    //     fetch(process.env.REACT_APP_SERVER + "/api/prediction/", requestOptions)
+    //         .then((response) => response.json())
+    //         .then((result) => {
+    //             document.getElementById("outputImage").src = "data:image/jpg;base64," + result["path"];
+    //             document.getElementById("predictInfo").innerText = result["results"];
+    //             event.target.classList.remove("animate-pulse");
+    //             cameraLoop(event);
+    //         })
+    //         .catch((error) => console.log("error", error));
+    // });
+
+    function prediction(event) {
+        if (activeTab === "image") {
+            event.target.classList.add("animate-pulse");
+            var formdata = new FormData();
+            formdata.append("projectName", document.getElementById("project").value);
+            formdata.append("modelName", document.getElementById("model").value);
+            formdata.append("inputSource", activeTab);
+            let fileInput = document.getElementById("imageInput");
+            formdata.append("image", fileInput.files[0], fileInput.files[0].name);
+            var requestOptions = {
+                method: "POST",
+                body: formdata,
+                redirect: "follow",
+            };
+
+            fetch(process.env.REACT_APP_SERVER + "/api/prediction/", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    document.getElementById("outputImage").src = process.env.REACT_APP_SERVER + "/static/" + result["path"];
+                    document.getElementById("predictInfo").innerText = result["results"];
+                    event.target.classList.remove("animate-pulse");
+                })
+                .catch((error) => console.log("error", error));
+        } else if (activeTab === "camera") {
+            fetch(process.env.REACT_APP_SERVER + "/api/engageCamera/" + document.getElementById("cameraSelect").value)
+                .then((res) => res.json())
+                .then((data) => {
+                    if (document.getElementById("project").value === "" || document.getElementById("model").value === "") {
+                        alert("Please select a project and model");
+                    } else {
+                        cameraLoop(event);
+                    }
+                })
+                .catch((error) => console.log("error", error));
+
+            // setInterval(() => {
+            // }, 100);
+        }
+    }
+
     window.onload = () => {
         navigator.mediaDevices.enumerateDevices().then(function (devices) {
             let tempCameras = [];
@@ -29,8 +131,8 @@ const PredictionForm = () => {
         });
     };
     return (
-        <div className="min-h-screen h-full mb-5">
-            <form className="lg:w-[80%] w-full h-full text-white mx-auto mt-5 backdrop-blur-xl rounded-none lg:rounded-xl overflow-hidden">
+        <div className="min-h-screen w-[calc(100%-2rem)] mx-auto h-full mb-5">
+            <form className="w-full h-full text-white mx-auto mt-5 backdrop-blur-xl rounded-none lg:rounded-xl overflow-hidden">
                 <div className="mt-4 ">
                     <div className="grid grid-cols-2 gap-4 gap-y-1 ">
                         <div className="grid grid-rows-3 gap-4 gap-y-1 h-64 mb-5 border border-primary-500 rounded-lg p-2">
@@ -191,7 +293,7 @@ const PredictionForm = () => {
                                                             video.srcObject.getTracks().forEach((track) => track.stop());
                                                             let mediaDevices = navigator.mediaDevices;
                                                             let cameraSelect = document.getElementById("cameraSelect").value;
-                                                            if (cameraSelect == "null") {
+                                                            if (cameraSelect === "null") {
                                                                 return;
                                                             } else {
                                                                 let constraints = {
@@ -221,7 +323,7 @@ const PredictionForm = () => {
                                                         --Select Camera--
                                                     </option>
                                                     {cameras.map((camera, index) => (
-                                                        <option key={index} value={camera.deviceId}>
+                                                        <option key={index} value={index}>
                                                             {camera.label}
                                                         </option>
                                                     ))}
@@ -266,7 +368,7 @@ const PredictionForm = () => {
                                                 <svg
                                                     onClick={() => {
                                                         console.log(document.getElementById("video").getAttribute("data-status"));
-                                                        if (document.getElementById("video").getAttribute("data-status") == "paused") {
+                                                        if (document.getElementById("video").getAttribute("data-status") === "paused") {
                                                             document.getElementById("video").play();
                                                             document.getElementById("video").setAttribute("data-status", "playing");
                                                         } else {
@@ -286,7 +388,7 @@ const PredictionForm = () => {
                                                 </svg>
                                                 <video
                                                     onClick={() => {
-                                                        if (document.getElementById("video").getAttribute("data-status") == "paused") {
+                                                        if (document.getElementById("video").getAttribute("data-status") === "paused") {
                                                             document.getElementById("video").play();
                                                             document.getElementById("video").setAttribute("data-status", "playing");
                                                             document.getElementById("playBtn").innerHTML = '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.25 5C5.56 5 5 5.56 5 6.25v3.5a1.25 1.25 0 1 0 2.5 0v-3.5C7.5 5.56 6.94 5 6.25 5zm3.5 0c-.69 0-1.25.56-1.25 1.25v3.5a1.25 1.25 0 1 0 2.5 0v-3.5C11 5.56 10.44 5 9.75 5z" />';
@@ -310,29 +412,7 @@ const PredictionForm = () => {
 
                     <div
                         onClick={(event) => {
-                            event.target.classList.add("animate-pulse");
-                            var formdata = new FormData();
-                            formdata.append("projectName", document.getElementById("project").value);
-                            formdata.append("modelName", document.getElementById("model").value);
-                            formdata.append("inputSource", activeTab);
-                            if (activeTab == "image") {
-                                let fileInput = document.getElementById("imageInput");
-                                formdata.append("image", fileInput.files[0], fileInput.files[0].name);
-                                var requestOptions = {
-                                    method: "POST",
-                                    body: formdata,
-                                    redirect: "follow",
-                                };
-
-                                fetch(process.env.REACT_APP_SERVER + "/api/prediction/", requestOptions)
-                                    .then((response) => response.json())
-                                    .then((result) => {
-                                        document.getElementById("outputImage").src = process.env.REACT_APP_SERVER + "/static/" + result["path"];
-                                        document.getElementById("predictInfo").innerText = result["results"];
-                                        event.target.classList.remove("animate-pulse");
-                                    })
-                                    .catch((error) => console.log("error", error));
-                            }
+                            prediction(event);
                         }}
                         className="bg-primary-800 w-full p-1 py-2 mb-5 rounded-lg text-center cursor-pointer hover:bg-primary-800/50 transition-all duration-300"
                     >

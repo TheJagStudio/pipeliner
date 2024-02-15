@@ -1,32 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
-block_cipher = None
-
-
 a = Analysis(
-    ['/mnt/d/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/manage.py'],
+    ['D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/pipeliner.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/api', 'api/'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/baseModels', 'baseModels/'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/pipeliner', 'pipeliner/'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/projects', 'projects/'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/static', 'static/'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/templates', 'templates/'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/data.zip', '.'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/db.sqlite3', '.'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/manage.py', '.'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/pipeliner.py', '.'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/Pipeliner.spec', '.'), ('D:/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/requirements2.txt', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Pipeliner',
+    name='pipeliner',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,15 +31,14 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['/mnt/d/pythonProjects/Pipeliner/pipelinerBackend/pipeliner/static/logo.ico'],
+    icon=['D:\\pythonProjects\\Pipeliner\\pipelinerBackend\\pipeliner\\static\\logo.ico'],
 )
 coll = COLLECT(
     exe,
     a.binaries,
-    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Pipeliner',
+    name='pipeliner',
 )

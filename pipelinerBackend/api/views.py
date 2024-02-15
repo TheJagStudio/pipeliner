@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, HttpResponseRedirect
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from cvat_sdk import make_client
 from cvat_sdk.core.proxies.tasks import ResourceType, Task
+import datumaro as dm
 from cvat_sdk.core.proxies.projects import Project
 from .models import (
     Basemodel,
@@ -18,8 +19,8 @@ import zipfile
 import os
 from datetime import datetime
 
-# import psutil
-# import pynvml
+import psutil
+
 import threading
 from ultralytics import YOLO
 import torch
@@ -31,13 +32,23 @@ import cv2
 import io
 import csv
 import random
+import base64
 
 predictPath = ""
 predictModel = None
 predictFolder = ""
+os.environ["WANDB_DISABLED"] = "true"
+realtimePredict = False
+caps = {}
+try:
+    device = torch.device("cuda")
+except:
+    device = torch.device("cpu")
 
-with make_client(host="app.cvat.ai", credentials=("basappa", "Tipl@123")) as client:
-    CVATClient = client
+# with make_client(
+#     host="app.cvat.ai", credentials=("basappa", "Tipl@123")
+# ) as client:
+#     CVATClient = client
 
 
 def createProject(name, labels):
@@ -70,74 +81,156 @@ def extractFolder(request):
     # Check if the request method is POST and if the "dataset" file was uploaded
     if request.method == "POST":
         if request.FILES.get("dataset", False):
+            # Check if a project name was provided
+            projectName = request.POST["projectName"]
             # Get the uploaded file and the project name from the request
             dataset = request.FILES["dataset"]
-            projectName = request.POST["projectName"]
-            # Check if a project name was provided
+            # Check if a dataset name was provided
+            datasetName = request.POST["datasetName"]
             if projectName != "":
-                # Create a folder name based on the current date and time
-                extract_folder = str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
-                # Set the target folder for the extracted files
-                target_folder = "projects/" + projectName + "/datasets/"
-                project = Fabric.objects.filter(fabricName=projectName).first()
-                # Extract the files from the zip file to the target folder
-                with zipfile.ZipFile(dataset, "r") as zip_ref:
-                    zip_ref.extractall(os.path.join(target_folder, extract_folder))
-                imagesTest = os.listdir(
-                    target_folder + extract_folder + "/test/images/"
-                )
-                imagesTrain = os.listdir(
-                    target_folder + extract_folder + "/train/images/"
-                )
-                imagesValid = os.listdir(
-                    target_folder + extract_folder + "/valid/images/"
-                )
-                images = []
-                for i in range(len(imagesTest)):
-                    images.append(
-                        target_folder + extract_folder + "/test/images/" + imagesTest[i]
+                if request.POST.get("datasetName", False):
+                    print(datasetName)
+                    # create a new temp folder
+                    extract_folder = str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+                    temp_folder = "temp/" + projectName + "/"
+                    target_folder = (
+                        "projects/" + projectName + "/datasets/" + datasetName + "/"
                     )
-                testTask = createTask(
-                    extract_folder + "_test", "Test", project.id, images
-                )
-                images = []
-                for i in range(len(imagesTrain)):
-                    images.append(
-                        target_folder
-                        + extract_folder
-                        + "/train/images/"
-                        + imagesTrain[i]
+                    project = Fabric.objects.filter(fabricName=projectName).first()
+                    # Extract the files from the zip file to the target folder
+                    with zipfile.ZipFile(dataset, "r") as zip_ref:
+                        zip_ref.extractall(os.path.join(temp_folder, extract_folder))
+
+                    # get the list of images in the test folder
+                    dataset = dm.Dataset.import_from(
+                        temp_folder + extract_folder + "/", "open_images"
                     )
-                trainTask = createTask(
-                    extract_folder + "_train", "Train", project.id, images
-                )
-                images = []
-                for i in range(len(imagesValid)):
-                    images.append(
-                        target_folder
-                        + extract_folder
-                        + "/valid/images/"
-                        + imagesValid[i]
+
+                    dataset.export(
+                        temp_folder + extract_folder + "/yolo/",
+                        "yolo_ultralytics",
+                        save_media=False,
                     )
-                validTask = createTask(
-                    extract_folder + "_valid", "Valid", project.id, images
-                )
-                newDataset = Dataset()
-                newDataset.fabric = newFabric
-                newDataset.datasetName = extract_folder
-                newDataset.tasks = json.dumps(
-                    {
-                        "test": testTask.id,
-                        "train": trainTask.id,
-                        "valid": validTask.id,
-                    }
-                )
-                newDataset.save()
-                # Return a success message if the extraction was successful
-                return HttpResponse(
-                    json.dumps({"success": "File extracted successfully!"}),
-                    content_type="application/json",
-                )
+
+                    # copy all folders and files from the temp_folder + extract_folder + "/yolo/labels" to the target folder
+                    for file in os.listdir(
+                        temp_folder + extract_folder + "/yolo/labels/test/"
+                    ):
+                        with open(
+                            temp_folder + extract_folder + "/yolo/labels/test/" + file,
+                            "rb",
+                        ) as f:
+                            with open(
+                                target_folder + "test/labels/" + file, "wb+"
+                            ) as target:
+                                target.write(f.read())
+                    for file in os.listdir(
+                        temp_folder + extract_folder + "/yolo/labels/train/"
+                    ):
+                        with open(
+                            temp_folder + extract_folder + "/yolo/labels/train/" + file,
+                            "rb",
+                        ) as f:
+                            with open(
+                                target_folder + "train/labels/" + file, "wb+"
+                            ) as target:
+                                target.write(f.read())
+                    for file in os.listdir(
+                        temp_folder + extract_folder + "/yolo/labels/val/"
+                    ):
+                        with open(
+                            temp_folder + extract_folder + "/yolo/labels/val/" + file,
+                            "rb",
+                        ) as f:
+                            with open(
+                                target_folder + "valid/labels/" + file, "wb+"
+                            ) as target:
+                                target.write(f.read())
+                    with open(
+                        temp_folder + extract_folder + "/yolo/data.yaml",
+                        "r",
+                    ) as f:
+                        lines = f.readlines()
+                        lines[0] = "train: ../train/images\n"
+                        lines[1] = "val: ../valid/images\n"
+                        lines[2] = "test: ../test/images\n"
+                        with open(
+                            target_folder + "data.yaml",
+                            "w",
+                        ) as target:
+                            target.writelines(lines)
+
+                    return HttpResponse(
+                        json.dumps({"success": "File extracted successfully!"}),
+                        content_type="application/json",
+                    )
+                else:
+                    # Create a folder name based on the current date and time
+                    extract_folder = str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+                    # Set the target folder for the extracted files
+                    target_folder = "projects/" + projectName + "/datasets/"
+                    project = Fabric.objects.filter(fabricName=projectName).first()
+                    # Extract the files from the zip file to the target folder
+                    with zipfile.ZipFile(dataset, "r") as zip_ref:
+                        zip_ref.extractall(os.path.join(target_folder, extract_folder))
+                    imagesTest = os.listdir(
+                        target_folder + extract_folder + "/test/images/"
+                    )
+                    imagesTrain = os.listdir(
+                        target_folder + extract_folder + "/train/images/"
+                    )
+                    imagesValid = os.listdir(
+                        target_folder + extract_folder + "/valid/images/"
+                    )
+                    images = []
+                    for i in range(len(imagesTest)):
+                        images.append(
+                            target_folder
+                            + extract_folder
+                            + "/test/images/"
+                            + imagesTest[i]
+                        )
+                    testTask = createTask(
+                        extract_folder + "_test", "test", project.id, images
+                    )
+                    images = []
+                    for i in range(len(imagesTrain)):
+                        images.append(
+                            target_folder
+                            + extract_folder
+                            + "/train/images/"
+                            + imagesTrain[i]
+                        )
+                    trainTask = createTask(
+                        extract_folder + "_train", "train", project.id, images
+                    )
+                    images = []
+                    for i in range(len(imagesValid)):
+                        images.append(
+                            target_folder
+                            + extract_folder
+                            + "/valid/images/"
+                            + imagesValid[i]
+                        )
+                    validTask = createTask(
+                        extract_folder + "_valid", "valid", project.id, images
+                    )
+                    newDataset = Dataset()
+                    newDataset.fabric = project
+                    newDataset.datasetName = extract_folder
+                    newDataset.tasks = json.dumps(
+                        {
+                            "test": testTask.id,
+                            "train": trainTask.id,
+                            "valid": validTask.id,
+                        }
+                    )
+                    newDataset.save()
+                    # Return a success message if the extraction was successful
+                    return HttpResponse(
+                        json.dumps({"success": "File extracted successfully!"}),
+                        content_type="application/json",
+                    )
             else:
                 # Return an error message if no project name was provided
                 return HttpResponse(
@@ -151,29 +244,19 @@ def extractFolder(request):
             )
 
 
-# # Define a view that returns system information
-# def sysInfo(request):
-#     # Get the percentage of used RAM
-#     ram = int(psutil.virtual_memory()[2])
-#     # Get the average CPU load over the last 1, 5, and 15 minutes
-#     load1, load5, load15 = psutil.getloadavg()
-#     # Calculate the percentage of CPU usage
-#     cpu = int((load5 / os.cpu_count()) * 100)
-#     # Initialize the NVML library
-#     pynvml.nvmlInit()
-#     # Get the handle for the first GPU
-#     handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-#     # Get the memory information for the GPU
-#     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-#     # Shutdown the NVML library
-#     pynvml.nvmlShutdown()
-#     # Calculate the percentage of used VRAM
-#     vram = int(info.used * 100 / info.total)
+# Define a view that returns system information
+def sysInfo(request):
+    # Get RAM usage
+    ram = psutil.virtual_memory()
+    ram_usage = ram.percent
 
-#     # Create a dictionary containing the system information
-#     data = {"ram": ram, "cpu": cpu, "vram": vram}
-#     # Return the system information as a JSON object
-#     return HttpResponse(json.dumps(data), content_type="application/json")
+    # Get CPU usage
+    cpu_usage = psutil.cpu_percent(interval=1)
+
+    # Create a dictionary containing the system information
+    data = {"ram": ram_usage, "cpu": cpu_usage}
+    # Return the system information as a JSON object
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 # Define a view that returns a list of project folders
@@ -198,7 +281,58 @@ def projectFecther(request):
         )
 
 
+def projectDetails(request):
+    try:
+        data = []
+
+        fabrics = Fabric.objects.all()
+        # for folder in os.listdir("projects"):
+        for fabric in fabrics:
+            if os.path.isdir("projects/" + fabric.fabricName):
+                datasetCount = 0
+                for item in os.listdir("projects/" + fabric.fabricName + "/datasets"):
+                    item_path = os.path.join(
+                        "projects/" + fabric.fabricName + "/datasets", item
+                    )
+                    if os.path.isdir(item_path):
+                        datasetCount += 1
+
+                modelCount = 0
+                for item in os.listdir("projects/" + fabric.fabricName + "/models"):
+                    item_path = os.path.join(
+                        "projects/" + fabric.fabricName + "/models", item
+                    )
+                    if os.path.isdir(item_path):
+                        modelCount += 1
+
+                sampleImages = []
+
+                for item in os.listdir("projects/" + fabric.fabricName + "/samples"):
+                    item_path = os.path.join(
+                        "projects/" + fabric.fabricName + "/samples", item
+                    )
+                    if os.path.isfile(item_path):
+                        sampleImages.append(fabric.fabricName + "/samples/" + item)
+
+                temp = {
+                    "id": fabric.id,
+                    "name": fabric.fabricName,
+                    "datasetCount": datasetCount,
+                    "modelCount": modelCount,
+                    "sampleImages": sampleImages,
+                }
+                data.append(temp)
+        # Return the list of project folders as a JSON object
+        return HttpResponse(json.dumps({"data": data}), content_type="application/json")
+    except Exception as e:
+        # If an error occurs, return an error message as a JSON object
+        return HttpResponse(
+            json.dumps({"error": str(e)}), content_type="application/json"
+        )
+
+
 # Define a view that returns a list of dataset folders for a specific project
+@csrf_exempt
 def datasetFecther(request):
     try:
         # Get the project name from the request
@@ -227,8 +361,10 @@ def modelFecther(request):
     try:
         # Get the project name from the request
         project = request.GET["project"]
-        # Initialize an empty list to store the model folders
         folders = []
+
+        # Initialize an empty list to store the model folders
+        # folders = []
         # Loop through all files and folders in the "models" directory for the specified project
         for folder in os.listdir("projects/" + project + "/models"):
             # Check if the current item is a directory
@@ -249,14 +385,19 @@ def modelFecther(request):
 # Define a view that returns a list of base model folders
 def basemodelFecther(request):
     try:
+        project = request.GET.get("project", False)
+        folders = {"baseModel": [], "projectModel": []}
+
+        if os.path.isdir("projects/" + str(project)):
+            for folder in os.listdir("projects/" + project + "/models"):
+                folders["projectModel"].append(folder)
+        # Loop through all files and folders in the "models" directory for the specified project
         # Initialize an empty list to store the base model folders
-        folders = []
+
         # Loop through all files and folders in the "baseModels" directory
         for folder in os.listdir("baseModels"):
-            # Check if the current item contains "yolo" in its name
             if "yolo" in folder:
-                # If it does, add it to the list of base model folders
-                folders.append(folder)
+                folders["baseModel"].append(folder)
         # Return the list of base model folders as a JSON object
         return HttpResponse(
             json.dumps({"data": folders}), content_type="application/json"
@@ -323,9 +464,18 @@ def modelTraining(request):
             baseModel = request.POST["baseModel"]
             imgsz = request.POST["imgsz"]
             name = request.POST["name"]
+            resume = request.POST["resume"]
             baseDir = os.getcwd()
-            # Initialize a YOLO model with the specified base model
-            model = YOLO("baseModels/" + baseModel)
+            if resume == "true":
+                resume = True
+                model = YOLO(
+                    "projects/" + project + "/models/" + name + "/weights/best.pt"
+                )
+                name = baseModel
+            else:
+                resume = False
+                # Initialize a YOLO model with the specified base model
+                model = YOLO("baseModels/" + baseModel)
             # Train the model using the specified parameters
             model.train(
                 data=baseDir
@@ -336,10 +486,12 @@ def modelTraining(request):
                 + "/data.yaml",
                 epochs=int(epochs),
                 imgsz=int(imgsz),
-                project=baseDir + "/projects/" + project + "/models/",
                 name=name,
                 batch=-1,
                 task="segment",
+                save_dir=baseDir + "/projects/" + project + "/models/",
+                resume=resume,
+                device=device,
             )
             # Return a success message as a JSON object
             return HttpResponse(
@@ -347,6 +499,7 @@ def modelTraining(request):
                 content_type="application/json",
             )
         except Exception as e:
+            print(e)
             # If an error occurs, return an error message as a JSON object
             return HttpResponse(
                 json.dumps({"error": str(e)}), content_type="application/json"
@@ -363,15 +516,16 @@ def modelTraining(request):
 @csrf_exempt
 def modelPrediction(request):
     if request.method == "POST":
+
         # Initialize variables for the prediction path, model, and folder
-        global predictPath, predictModel, predictFolder
+        global predictPath, predictModel, predictFolder, caps
         results = []
         # Get the project name, model name, and input source from the request
         project = request.POST["projectName"]
         modelName = request.POST["modelName"]
         inputSource = request.POST["inputSource"]
         # Check if the input source is an uploaded image
-        if request.FILES.get("image", False):
+        if inputSource == "image":
             # If it is, save the image to the project's images directory
             image = request.FILES["image"]
             # save the image to the project's images directory
@@ -391,98 +545,210 @@ def modelPrediction(request):
                     "projects/" + project + "/models/" + modelName + "/weights/best.pt"
                 )
                 predictFolder = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-            # Predict the objects in the image using the YOLO model
-            results = predictModel(
-                "projects/" + project + "/images/" + image.name,
-                retina_masks=True,
-                iou=0.1,
-                conf=0.01,
-                imgsz=640,
-                project="projects/" + project + "/predicts/",
-                name=predictFolder,
-                save=True,
-                show_conf=False,
-                show_labels=False,
-                boxes=False,
-            )
-            for result in results:
-                orignalPath = result.path
-                path = (
-                    "projects/"
-                    + project
-                    + "/predicts/"
-                    + predictFolder
-                    + "/"
-                    + image.name
+            try:
+                # Predict the objects in the image using the YOLO model
+                results = predictModel(
+                    "projects/" + project + "/images/" + image.name,
+                    retina_masks=True,
+                    iou=0.1,
+                    conf=0.3,
+                    imgsz=640,
+                    project="projects/" + project + "/predicts/",
+                    name=predictFolder,
+                    save=True,
+                    show_conf=False,
+                    show_labels=False,
+                    show_boxes=False,
                 )
-                imageCv = cv2.imread(path)
-                for box in result.boxes:
-                    boxCor = box.xyxy.tolist()[0]
-                    centerX = boxCor[0] + ((boxCor[2] - boxCor[0]) / 2)
-                    centerY = boxCor[1] + ((boxCor[3] - boxCor[1]) / 2)
-                    confident = box.conf.tolist()[0]
-                    # plot the point on the image
-                    imageHeight, imageWidth, _ = imageCv.shape
-                    imageCv = cv2.circle(
-                        imageCv,
-                        (int(centerX), int(centerY)),
-                        10,
-                        (0, 255, 255),
-                        10,
-                    )
-                    imageCv = cv2.rectangle(
-                        imageCv,
-                        (int(boxCor[0]), int(boxCor[1])),
-                        (int(boxCor[2]), int(boxCor[3])),
-                        (0, 255, 255),
-                        1,
-                    )
-                    imageCv = cv2.putText(
-                        imageCv,
-                        str(confident)[:4],
-                        (int(boxCor[0]), int(boxCor[1]) - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1,
-                        (0, 255, 255),
-                        2,
-                        cv2.LINE_AA,
-                    )
-                    newPredict = PredictionData()
-                    newPredict.fabric = Fabric.objects.filter(
-                        fabricName=project
-                    ).first()
-                    newPredict.centroid = str(centerX)[:4] + "," + str(centerY)[:4]
-                    newPredict.boundingBox = (
-                        str(boxCor[0])[:4]
-                        + ","
-                        + str(boxCor[1])[:4]
-                        + ","
-                        + str(boxCor[2])[:4]
-                        + ","
-                        + str(boxCor[3])[:4]
-                    )
-                    newPredict.imageRaw = (
-                        "projects/" + project + "/images/" + image.name
-                    )
-                    newPredict.imageAnnotated = path
-                    newPredict.confidence = confident
-                    newPredict.save()
-                # save the image
-                cv2.imwrite(path, imageCv)
-
-            return HttpResponse(
-                json.dumps(
-                    {
-                        "path": project
+                for result in results:
+                    orignalPath = result.path
+                    path = (
+                        "projects/"
+                        + project
                         + "/predicts/"
                         + predictFolder
                         + "/"
-                        + image.name,
-                        "results": str(results),
-                    }
-                ),
-                content_type="application/json",
-            )
+                        + image.name
+                    )
+                    imageCv = cv2.imread(path)
+                    for box in result.boxes:
+                        boxCor = box.xyxy.tolist()[0]
+                        centerX = boxCor[0] + ((boxCor[2] - boxCor[0]) / 2)
+                        centerY = boxCor[1] + ((boxCor[3] - boxCor[1]) / 2)
+                        confident = box.conf.tolist()[0]
+                        # plot the point on the image
+                        imageHeight, imageWidth, _ = imageCv.shape
+                        imageCv = cv2.circle(
+                            imageCv,
+                            (int(centerX), int(centerY)),
+                            10,
+                            (0, 255, 255),
+                            10,
+                        )
+                        imageCv = cv2.rectangle(
+                            imageCv,
+                            (int(boxCor[0]), int(boxCor[1])),
+                            (int(boxCor[2]), int(boxCor[3])),
+                            (0, 255, 255),
+                            1,
+                        )
+                        imageCv = cv2.putText(
+                            imageCv,
+                            str(confident)[:4],
+                            (int(boxCor[0]), int(boxCor[1]) - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            1,
+                            (0, 255, 255),
+                            2,
+                            cv2.LINE_AA,
+                        )
+                        newPredict = PredictionData()
+                        newPredict.fabric = Fabric.objects.filter(
+                            fabricName=project
+                        ).first()
+                        newPredict.centroid = str(centerX)[:4] + "," + str(centerY)[:4]
+                        newPredict.boundingBox = (
+                            str(boxCor[0])[:4]
+                            + ","
+                            + str(boxCor[1])[:4]
+                            + ","
+                            + str(boxCor[2])[:4]
+                            + ","
+                            + str(boxCor[3])[:4]
+                        )
+                        newPredict.imageRaw = (
+                            "projects/" + project + "/images/" + image.name
+                        )
+                        newPredict.imageAnnotated = path
+                        newPredict.confidence = confident
+                        newPredict.save()
+                    # save the image
+                    cv2.imwrite(path, imageCv)
+                return HttpResponse(
+                    json.dumps(
+                        {
+                            "path": project
+                            + "/predicts/"
+                            + predictFolder
+                            + "/"
+                            + image.name,
+                            "results": str(results),
+                        }
+                    ),
+                    content_type="application/json",
+                )
+            except Exception as e:
+                return HttpResponse(
+                    json.dumps(
+                        {
+                            "error": str(e),
+                            "status": "error",
+                        }
+                    ),
+                    content_type="application/json",
+                )
+        elif inputSource == "camera":
+            cameraIndex = request.POST["cameraIndex"]
+            # image = request.FILES["camera"]
+
+            # convert the image to cv2 format
+            # image = Image.open(image)
+
+            # read the camera using opencv
+            try:
+                ret, image = caps["Camera" + str(cameraIndex)].read()
+                image_np = np.array(image)
+                if (
+                    "projects/" + project + "/models/" + modelName + "/weights/best.pt"
+                    != predictPath
+                ):
+                    # If it is, update the prediction path, model, and folder
+                    predictPath = (
+                        "projects/"
+                        + project
+                        + "/models/"
+                        + modelName
+                        + "/weights/best.pt"
+                    )
+                    predictModel = YOLO(
+                        "projects/"
+                        + project
+                        + "/models/"
+                        + modelName
+                        + "/weights/best.pt"
+                    )
+                # results = predictModel(
+                #     source=image_np,
+                #     iou=0.1,
+                #     conf=0.3,
+                #     imgsz=640,
+                #     save=False,
+                #     # show_conf=True,
+                #     # show_labels=True,
+                #     # show_boxes=True,
+                # )
+
+                # for result in results:
+                #     for box in result.boxes:
+                #         boxCor = box.xyxy.tolist()[0]
+                #         centerX = boxCor[0] + ((boxCor[2] - boxCor[0]) / 2)
+                #         centerY = boxCor[1] + ((boxCor[3] - boxCor[1]) / 2)
+                #         confident = box.conf.tolist()[0]
+                #         # plot the point on the image
+                #         imageHeight, imageWidth, _ = image_np.shape
+                #         image_np = cv2.circle(
+                #             image_np,
+                #             (int(centerX), int(centerY)),
+                #             10,
+                #             (0, 255, 255),
+                #             10,
+                #         )
+                #         image_np = cv2.rectangle(
+                #             image_np,
+                #             (int(boxCor[0]), int(boxCor[1])),
+                #             (int(boxCor[2]), int(boxCor[3])),
+                #             (0, 255, 255),
+                #             1,
+                #         )
+                #         image_np = cv2.putText(
+                #             image_np,
+                #             str(confident)[:4],
+                #             (int(boxCor[0]), int(boxCor[1]) - 5),
+                #             cv2.FONT_HERSHEY_SIMPLEX,
+                #             1,
+                #             (0, 255, 255),
+                #             2,
+                #             cv2.LINE_AA,
+                #         )
+                # convert image to pil format
+                imageCV = Image.fromarray(image_np)
+                # bgr to rgb
+                imageCV = imageCV.convert("RGB")
+
+                # convert the image to base64
+                _, img_encoded = cv2.imencode(".png", np.array(image_np))
+                img_bytes = img_encoded.tobytes()
+                img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+                return HttpResponse(
+                    json.dumps(
+                        {
+                            "path": img_base64,
+                            "status": "success",
+                        }
+                    ),
+                    content_type="application/json",
+                )
+            except Exception as e:
+                return HttpResponse(
+                    json.dumps(
+                        {
+                            "error": str(e),
+                            "status": "error",
+                        }
+                    ),
+                    content_type="application/json",
+                )
+
         else:
             # If no input source is provided, return an error message as a JSON object
             return HttpResponse(
@@ -496,6 +762,180 @@ def modelPrediction(request):
         )
 
 
+def webcam(cameraIndex, project, modelName):
+    global predictPath, predictModel, predictFolder, caps, realtimePredict
+    try:
+        caps["Camera" + str(cameraIndex)] = cv2.VideoCapture(int(cameraIndex))
+    except:
+        try:
+            caps["Camera" + str(cameraIndex)] = cv2.VideoCapture(
+                "/dev/video" + str(cameraIndex)
+            )
+        except:
+            pass
+    while True:
+        success, image = caps["Camera" + str(cameraIndex)].read()
+        if success:
+            image_np = np.array(image)
+            if realtimePredict:
+                if (
+                    "projects/" + project + "/models/" + modelName + "/weights/best.pt"
+                    != predictPath
+                ):
+                    # If it is, update the prediction path, model, and folder
+                    predictPath = (
+                        "projects/"
+                        + project
+                        + "/models/"
+                        + modelName
+                        + "/weights/best.pt"
+                    )
+                    predictModel = YOLO(
+                        "projects/"
+                        + project
+                        + "/models/"
+                        + modelName
+                        + "/weights/best.pt"
+                    )
+                results = predictModel(
+                    source=image_np,
+                    iou=0.1,
+                    conf=0.3,
+                    imgsz=256,
+                    save=False,
+                    # show_conf=True,
+                    # show_labels=True,
+                    # show_boxes=True,
+                )
+
+                for result in results:
+                    for box in result.boxes:
+                        boxCor = box.xyxy.tolist()[0]
+                        centerX = boxCor[0] + ((boxCor[2] - boxCor[0]) / 2)
+                        centerY = boxCor[1] + ((boxCor[3] - boxCor[1]) / 2)
+                        confident = box.conf.tolist()[0]
+                        # plot the point on the image
+                        imageHeight, imageWidth, _ = image_np.shape
+                        image_np = cv2.circle(
+                            image_np,
+                            (int(centerX), int(centerY)),
+                            10,
+                            (0, 255, 255),
+                            10,
+                        )
+                        image_np = cv2.rectangle(
+                            image_np,
+                            (int(boxCor[0]), int(boxCor[1])),
+                            (int(boxCor[2]), int(boxCor[3])),
+                            (0, 255, 255),
+                            1,
+                        )
+                        image_np = cv2.putText(
+                            image_np,
+                            str(confident)[:4],
+                            (int(boxCor[0]), int(boxCor[1]) + 5),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            1,
+                            (0, 255, 255),
+                            2,
+                            cv2.LINE_AA,
+                        )
+
+            # convert the image to base64
+            _, img_encoded = cv2.imencode(".jpg", np.array(image_np))
+            img_bytes = img_encoded.tobytes()
+            yield (
+                b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + img_bytes + b"\r\n"
+            )
+        else:
+            caps["Camera" + str(cameraIndex)].release()
+
+
+@csrf_exempt
+def realtimePrediction(request):
+    cameraIndex = request.GET["cameraIndex"]
+    project = request.GET["project"]
+    modelName = request.GET["modelName"]
+
+    # read the camera using opencv
+    try:
+        return StreamingHttpResponse(
+            webcam(cameraIndex, project, modelName),
+            content_type="multipart/x-mixed-replace;boundary=frame",
+        )
+    except Exception as e:
+        image = open("static/error.png", "rb").read()
+        return HttpResponse(
+            image,
+            content_type="image/png",
+        )
+
+
+def toggleRealtimePrediction(request):
+    global realtimePredict
+    try:
+        if realtimePredict:
+            realtimePredict = False
+        else:
+            realtimePredict = True
+        return HttpResponse(
+            json.dumps(
+                {
+                    "status": "success",
+                    "data": realtimePredict,
+                }
+            ),
+            content_type="application/json",
+        )
+    except Exception as e:
+        return HttpResponse(
+            json.dumps(
+                {
+                    "status": "error",
+                    "error": str(e),
+                }
+            ),
+            content_type="application/json",
+        )
+
+
+def engageCamera(request, index):
+    try:
+        global caps
+        try:
+            caps["Camera" + str(index)] = cv2.VideoCapture(int(index))
+        except:
+            try:
+                caps["Camera" + str(index)] = cv2.VideoCapture(
+                    "/dev/video" + str(index)
+                )
+            except:
+                pass
+    except Exception as e:
+        pass
+    return HttpResponse(
+        json.dumps(
+            {
+                "status": "success",
+            }
+        ),
+        content_type="application/json",
+    )
+
+
+def disengageCamera(request, index):
+    global caps
+    caps["Camera" + str(index)].release()
+    return HttpResponse(
+        json.dumps(
+            {
+                "status": "success",
+            }
+        ),
+        content_type="application/json",
+    )
+
+
 # Define a view that returns the details of a trained model
 def modelDetails(request):
     try:
@@ -503,7 +943,8 @@ def modelDetails(request):
         project = request.GET["project"]
         model = request.GET["model"]
         # Define the path to the results CSV file
-        csvFile = "projects/" + project + "/models/" + model + "/results.csv"
+        csvFile = "runs/segment/" + model + "/results.csv"
+        # csvFile = "projects/" + project + "/models/" + model + "/results.csv"
         # Initialize an empty list to store the model details
         data = []
         # Open the CSV file and read the rows
@@ -573,6 +1014,7 @@ def addNewFebric(request):
                 newFabric.fabricType = fabricType
                 newFabric.material = material
                 newFabric.sampleImages = images[0]
+                newFabric.labels = labels
                 newFabric.save()
 
                 for file in images:
@@ -608,7 +1050,7 @@ def addNewFebric(request):
                             + imagesTest[i]
                         )
                     testTask = createTask(
-                        extract_folder + "_test", "Test", project.id, images
+                        extract_folder + "_test", "test", project.id, images
                     )
                     images = []
                     for i in range(len(imagesTrain)):
@@ -619,7 +1061,7 @@ def addNewFebric(request):
                             + imagesTrain[i]
                         )
                     trainTask = createTask(
-                        extract_folder + "_train", "Train", project.id, images
+                        extract_folder + "_train", "train", project.id, images
                     )
                     images = []
                     for i in range(len(imagesValid)):
@@ -630,7 +1072,7 @@ def addNewFebric(request):
                             + imagesValid[i]
                         )
                     validTask = createTask(
-                        extract_folder + "_valid", "Valid", project.id, images
+                        extract_folder + "_valid", "valid", project.id, images
                     )
                     newDataset = Dataset()
                     newDataset.fabric = newFabric
@@ -647,9 +1089,6 @@ def addNewFebric(request):
                     # imagesTest = os.listdir(
                     #     folderPath + "/datasets/" + extract_folder + "/test/images/"
                     # )
-                    # labelsTest = os.listdir(
-                    #     folderPath + "/datasets/" + extract_folder + "/test/labels/"
-                    # )
                     # imagesTrain = os.listdir(
                     #     folderPath + "/datasets/" + extract_folder + "/train/images/"
                     # )
@@ -662,7 +1101,7 @@ def addNewFebric(request):
                     # labelsValid = os.listdir(
                     #     folderPath + "/datasets/" + extract_folder + "/valid/labels/"
                     # )
-                    # for image, label in zip(imagesTest, labelsTest):
+                    # for image in imagesTest:
                     #     newImage = Imagegallery()
                     #     newImage.fabric = newFabric
                     #     newImage.dataset = newDataset
@@ -676,18 +1115,43 @@ def addNewFebric(request):
                     #         + image,
                     #         "rb",
                     #     ).read()
-                    #     tempLabel = open(
+                    #     newImage.image = tempImage
+                    #     newImage.save()
+                    #     print(image)
+                    # for image in imagesTrain:
+                    #     newImage = Imagegallery()
+                    #     newImage.fabric = newFabric
+                    #     newImage.dataset = newDataset
+                    #     newImage.imageType = "train"
+                    #     # read the image
+                    #     tempImage = open(
                     #         folderPath
                     #         + "/datasets/"
                     #         + extract_folder
-                    #         + "/test/labels/"
+                    #         + "/train/images/"
                     #         + image,
                     #         "rb",
                     #     ).read()
                     #     newImage.image = tempImage
-                    #     newImage.imageLabel = tempLabel
                     #     newImage.save()
                     #     print(image)
+                    # for label in labelsTrain:
+                    #     newImage = Imagegallery()
+                    #     newImage.fabric = newFabric
+                    #     newImage.dataset = newDataset
+                    #     newImage.imageType = "train"
+                    #     # read the image
+                    #     tempImage = open(
+                    #         folderPath
+                    #         + "/datasets/"
+                    #         + extract_folder
+                    #         + "/train/labels/"
+                    #         + label,
+                    #         "rb",
+                    #     ).read()
+                    #     newImage.image = tempImage
+                    #     newImage.save()
+                    #     print(label)
 
                 return HttpResponse(
                     json.dumps({"success": "Fabric Created successfully"}),
@@ -705,7 +1169,7 @@ def addNewFebric(request):
             )
     else:
         return HttpResponse(
-            json.dumps({"erroe": "Invalid Request"}),
+            json.dumps({"error": "Invalid Request"}),
             content_type="application/json",
         )
 
@@ -748,7 +1212,7 @@ def taskDetails(request):
         ).first()
         labels = task.fabric.labels
         return HttpResponse(
-            json.dumps({"tasks": task.tasks, "labels": labels}),
+            json.dumps({"tasks": json.loads(task.tasks), "labels": labels}),
             content_type="application/json",
         )
     except Exception as e:
@@ -797,3 +1261,60 @@ def AnnotatorAllocation(request):
             return HttpResponse(
                 json.dumps({"error": str(e)}), content_type="application/json"
             )
+
+
+@csrf_exempt
+def projectDetailsFetch(request):
+    projectId = request.GET.get("projectID")
+    fabric = Fabric.objects.filter(id=projectId).first()
+    data = {}
+    fname = fabric.fabricName
+    data["fabricName"] = fname
+    data["fabricDescription"] = fabric.fabricDescription
+    data["GSM"] = fabric.GSM
+    data["color"] = fabric.color
+    data["fabricType"] = fabric.fabricType
+    data["material"] = fabric.material
+    data["labels"] = fabric.labels
+    data["images"] = []
+
+    # list all folder names in projects/fabric.fabricName/datasets
+    datasets = os.listdir("projects/" + fname + "/datasets")
+    datasetDetail = []
+    for dataset in datasets:
+        temp = {}
+        temp["datasetName"] = dataset
+        trainPath = "projects/" + fname + "/datasets/" + dataset + "/train/images/"
+        temp["images"] = []
+        for image in os.listdir(trainPath)[:6]:
+            temp["images"].append(
+                fname + "/datasets/" + dataset + "/train/images/" + image
+            )
+        temp["trainCount"] = len(
+            os.listdir("projects/" + fname + "/datasets/" + dataset + "/train/images/")
+        )
+        temp["validCount"] = len(
+            os.listdir("projects/" + fname + "/datasets/" + dataset + "/test/images/")
+        )
+        temp["testCount"] = len(
+            os.listdir("projects/" + fname + "/datasets/" + dataset + "/valid/images/")
+        )
+
+        data["images"].append(temp["images"][0])
+        data["images"].append(temp["images"][1])
+
+        datasetDetail.append(temp)
+    data["datasetDetail"] = datasetDetail
+    folders = []
+    for folder in os.listdir("projects/" + fname + "/models"):
+        if os.path.isdir("projects/" + fname + "/models/" + folder):
+            folders.append(folder)
+    data["models"] = folders
+
+    return HttpResponse(json.dumps({"data": data}), content_type="application/json")
+
+
+# except Exception as e:
+#     return HttpResponse(
+#         json.dumps({"error": str(e)}), content_type="application/json"
+#     )

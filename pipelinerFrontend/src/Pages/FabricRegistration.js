@@ -6,6 +6,7 @@ const FabricRegistration = () => {
     const [models, setModels] = useState([]);
     const [datasetName, setDatasetName] = useState("");
     const [datasets, setDatasets] = useState([]);
+    const [datasetsList, setDatasetsList] = useState([]);
     const [fabricName, setFabricName] = useState("");
     const [fabricDetails, setFabricDetails] = useState("");
     const [fabricImages, setFabricImages] = useState([]);
@@ -25,8 +26,8 @@ const FabricRegistration = () => {
     }, []);
 
     return (
-        <div className="min-h-screen h-full mb-5">
-            <div className="lg:w-[90%] p-[2px] w-full h-full text-white mx-auto mt-5 backdrop-blur-xl rounded-none lg:rounded-xl overflow-hidden">
+        <div className="min-h-screen w-[calc(100%-2rem)] mx-auto h-full mb-5">
+            <div className="p-[2px] w-full h-full text-white mx-auto mt-5 backdrop-blur-xl rounded-none lg:rounded-xl overflow-hidden">
                 <div className="mt-4">
                     <div className="grid grid-cols-4 gap-4 gap-y-1">
                         <div className="h-64 mb-5 border border-primary-500 rounded-lg p-2 overflow-hidden">
@@ -259,9 +260,9 @@ const FabricRegistration = () => {
                         <p className="font-mono font-medium">Register Fabric</p>
                     </div>
                     <div className="grid grid-cols-3 gap-4 gap-y-1 mt-5">
-                        <div className="h-64 border border-primary-500 rounded-lg p-2">
-                            <label className="block text-sm">
-                                <span>Fabric</span>
+                        <div className="h-fit border border-primary-500 rounded-lg p-2">
+                            <div className="block text-sm">
+                                <p>Fabric</p>
                                 <span className="relative mt-1.5 flex">
                                     <select
                                         onChange={() => {
@@ -272,6 +273,17 @@ const FabricRegistration = () => {
                                                     setFabricImages(result["images"]);
                                                 })
                                                 .catch((error) => console.log("error", error));
+                                            fetch(process.env.REACT_APP_SERVER + "/api/datasetFecther?project=" + document.getElementById("project").value)
+                                                .then((res) => res.json())
+                                                .then((data) => {
+                                                    // check if the data has error key
+                                                    if (!data.hasOwnProperty("error")) {
+                                                        setDatasetsList(data["data"]);
+                                                    } else {
+                                                        setDatasetsList([]);
+                                                        alert(data["error"]);
+                                                    }
+                                                });
                                         }}
                                         id="project"
                                         name="project"
@@ -306,7 +318,39 @@ const FabricRegistration = () => {
                                         </svg>
                                     </span>
                                 </span>
-                            </label>
+                                <p>Dataset</p>
+                                <span className="relative mt-1.5 flex">
+                                    <select id="dataset" name="dataset" className="form-input outline-none peer w-full rounded-lg border bg-white border-slate-300 bg-transparent px-3 py-2 pl-9 text-black hover:border-secondary-700 focus:border-secondary ">
+                                        <option selected value="">
+                                            --Select Dataset--
+                                        </option>
+                                        {datasetsList.map((project, index) => (
+                                            <option key={index} value={project}>
+                                                {project}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="pointer-events-none absolute flex h-full w-10 items-center justify-center text-secondary-700 peer-focus:text-secondary dark:text-navy-300 dark:peer-focus:text-accent">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 400 400">
+                                            <path
+                                                style={{
+                                                    opacity: 1,
+                                                    fill: "currentColor",
+                                                    fillOpacity: 1,
+                                                    stroke: "none",
+                                                    strokeWidth: 25,
+                                                    strokeMiterlimit: 4,
+                                                    strokeDasharray: "none",
+                                                    strokeDashoffset: 0,
+                                                    strokeOpacity: 1,
+                                                }}
+                                                d="M237.43 701.862v40h-186v49.692H0v211.308h400v-301H262.43zm25 25H375v251h-50v-185.42h-.162v-.888H76.43v-24.692l186 .945z"
+                                                transform="translate(0 -652.362)"
+                                            />
+                                        </svg>
+                                    </span>
+                                </span>
+                            </div>
                             <div className="w-full mt-2">
                                 <p>Fabric Details</p>
                                 <textarea id="fabricDetails" name="fabricDetails" value={fabricDetails} rows={3} placeholder="Enter fabric details..." className="w-full rounded-lg px-3 py-1.5 mt-1.5 bg-white text-black placeholder:text-black outline-none focus:outline-none" />
@@ -329,26 +373,36 @@ const FabricRegistration = () => {
                                 onClick={(event) => {
                                     event.target.classList.add("animate-pulse");
                                     var formdata = new FormData();
-                                    formdata.append("dataset", document.getElementById("datasetInput2").files[0], "/D:/pythonProjects/TextileProject/NoteBooks/datasets/data.zip");
+                                    try {
+                                        formdata.append("dataset", document.getElementById("datasetInput2").files[0], "/D:/pythonProjects/TextileProject/NoteBooks/datasets/data.zip");
+                                    } catch (e) {}
                                     formdata.append("projectName", document.getElementById("project").value);
+                                    if (document.getElementById("dataset").value !== "") {
+                                        formdata.append("datasetName", document.getElementById("dataset").value);
+                                    }
 
                                     var requestOptions = {
                                         method: "POST",
                                         body: formdata,
                                         redirect: "follow",
                                     };
-
+                                    document.getElementById("cover").classList.remove("hidden");
                                     fetch(process.env.REACT_APP_SERVER + "/api/extractFolder/", requestOptions)
                                         .then((response) => response.json())
                                         .then((result) => {
-                                            if (result["error"] == undefined) {
+                                            if (result["error"] === undefined) {
                                                 alert(result["success"]);
+                                                document.getElementById("cover").classList.add("hidden");
                                             } else {
                                                 alert(result["error"]);
+                                                document.getElementById("cover").classList.add("hidden");
                                             }
                                             event.target.classList.remove("animate-pulse");
                                         })
-                                        .catch((error) => console.log("error", error));
+                                        .catch((error) => {
+                                            console.log("error", error);
+                                            document.getElementById("cover").classList.add("hidden");
+                                        });
                                 }}
                                 className="absolute top-0 right-0  bg-green-500 px-3  rounded-bl-lg cursor-pointer hover:bg-green-600 transition-all duration-300"
                             >

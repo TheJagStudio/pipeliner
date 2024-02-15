@@ -13,6 +13,9 @@ import ImageGallery from "./Pages/ImageGallery";
 
 import FabricRegistration from "./Pages/FabricRegistration";
 import AnnotatorAlloaction from "./Pages/AnnotatorAlloaction";
+import Projects from "./Pages/Projects";
+import ProjectDetails from "./Pages/ProjectDetails";
+import RealtimeForm from "./Pages/RealtimeForm";
 
 export default function App() {
     return (
@@ -20,9 +23,12 @@ export default function App() {
             <div className="flex flex-col bg-primary-950 min-h-screen">
                 <Navbar />
                 <Routes>
-                    <Route path="/" element={<FabricRegistration />} />
+                    <Route path="/" element={<Projects />} />
+                    <Route path="/registration" element={<FabricRegistration />} />
+                    <Route path="/project/:id" element={<ProjectDetails />} />
                     <Route path="/train" element={<TrainForm />} />
                     <Route path="/prediction" element={<PredictionForm />} />
+                    <Route path="/realtime" element={<RealtimeForm />} />
                     <Route path="/image-annotation" element={<ImageAnnotation />} />
                     <Route path="/image-gallery" element={<ImageGallery />} />
                     <Route path="/annotator-allocation" element={<AnnotatorAlloaction />} />
