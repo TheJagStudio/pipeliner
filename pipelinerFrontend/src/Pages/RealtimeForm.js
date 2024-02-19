@@ -55,16 +55,21 @@ const RealtimeForm = () => {
     // }
 
     window.onload = () => {
-        navigator.mediaDevices.enumerateDevices().then(function (devices) {
-            let tempCameras = [];
-            for (var i = 0; i < devices.length; i++) {
-                var device = devices[i];
-                if (device.kind === "videoinput") {
-                    tempCameras.push(device);
-                }
-            }
-            setCameras(tempCameras);
-        });
+        // navigator.mediaDevices.enumerateDevices().then(function(devices) {
+        //     let tempCameras = [];
+        //     for (var i = 0; i < devices.length; i++) {
+        //         var device = devices[i];
+        //         if (device.kind === "videoinput") {
+        //             tempCameras.push(device);
+        //         }
+        //     }
+        //     setCameras(tempCameras);
+        // });
+        fetch(process.env.REACT_APP_SERVER + "/api/cameraListFetcher/")
+            .then((res) => res.json())
+            .then((data) => {
+                setCameras(data["data"]);
+            });
     };
     return (
         <div className="min-h-screen w-[calc(100%-2rem)] mx-auto h-full mb-5">
@@ -170,10 +175,10 @@ const RealtimeForm = () => {
                                     <option value="null" selected>
                                         --Select Camera--
                                     </option>
-                                    {cameras.map((camera, index) => {
+                                    {cameras?.map((camera, index) => {
                                         return (
-                                            <option key={index} value={JSON.stringify([index, camera.label])}>
-                                                {camera.label}
+                                            <option key={index} value={JSON.stringify(camera)}>
+                                                {camera?.[1]}
                                             </option>
                                         );
                                     })}
@@ -193,13 +198,15 @@ const RealtimeForm = () => {
                                                 alert("Camera already added to the system");
                                             } else {
                                                 setCameraList([...cameraList, selectedCamera]);
-                                                fetch(process.env.REACT_APP_SERVER + "/api/engageCamera/" + JSON.parse(selectedCamera)[0])
-                                                    .then((res) => res.json())
-                                                    .then((data) => {
-                                                        let index = JSON.parse(selectedCamera)[0];
-                                                        // cameraLoop(index);
-                                                    })
-                                                    .catch((error) => console.log("error", error));
+                                                if (parseInt(JSON.parse(selectedCamera)[0]) !== NaN) {
+                                                    fetch(process.env.REACT_APP_SERVER + "/api/engageCamera/" + JSON.parse(selectedCamera)[0])
+                                                        .then((res) => res.json())
+                                                        .then((data) => {
+                                                            let index = JSON.parse(selectedCamera)[0];
+                                                            // cameraLoop(index);
+                                                        })
+                                                        .catch((error) => console.log("error", error));
+                                                }
                                             }
                                         }
                                     }}
@@ -234,7 +241,7 @@ const RealtimeForm = () => {
                         {toggleStart ? "Stop" : "Start"}
                     </div>
                 </div>
-                <div className={`grid grid-cols-3 gap-5 mt-10`}>
+                <div className={`grid grid-cols-2 gap-5 mt-10`}>
                     {cameraList.map((item, index) => {
                         let cameraData = JSON.parse(item);
                         return (

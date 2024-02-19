@@ -3,7 +3,7 @@ import ImageModel from "./ImageModel";
 import TabNavItem from "./TabNavItem";
 import TabContent from "./TabContent";
 
-const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabels, setCurrentPolygonIndex }) => {
+const ImageAnnotationSidebar = ({ setLabels }) => {
     const swiperRef = useRef(null);
     const [images, setImages] = useState([]);
     const [viewImageSrc, setViewImageSrc] = useState(0);
@@ -237,8 +237,8 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabel
             <hr className="my-3 border-primary-200 scale-x-110" />
             <div className="h-full">
                 <ul className="flex items-center justify-between">
-                    <TabNavItem title="Non-Annotated" classes={activeTab == "Non-Annotated" ? "bg-primary-900" : ""} id="Non-Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
-                    <TabNavItem title="Annotated" classes={activeTab == "Annotated" ? "bg-primary-900" : ""} id="Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <TabNavItem title="Non-Annotated" classes={activeTab === "Non-Annotated" ? "bg-primary-900" : ""} id="Non-Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <TabNavItem title="Annotated" classes={activeTab === "Annotated" ? "bg-primary-900" : ""} id="Annotated" activeTab={activeTab} setActiveTab={setActiveTab} />
                 </ul>
                 <div>
                     <TabContent id="Non-Annotated" activeTab={activeTab}>
@@ -264,9 +264,6 @@ const ImageAnnotationSidebar = ({ setTempShape, setMagicPoints, labels, setLabel
                                                     annotationBox.style.height = maxHeight + "px";
                                                     annotationBox.style.width = maxHeight / ratio + "px";
                                                 }
-                                                setTempShape([[]]);
-                                                setMagicPoints([]);
-                                                setCurrentPolygonIndex(0);
                                             }}
                                             className="absolute h-7 w-7 scale-0 -translate-x-full group-hover:translate-x-0 group-hover:scale-100 bg-transparent hover:bg-primary-200 top-2 right-2 rounded border-2 border-transparent hover:border-primary-500 flex items-center justify-center transition-all duration-300"
                                         >

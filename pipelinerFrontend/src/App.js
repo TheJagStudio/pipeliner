@@ -16,6 +16,8 @@ import AnnotatorAlloaction from "./Pages/AnnotatorAlloaction";
 import Projects from "./Pages/Projects";
 import ProjectDetails from "./Pages/ProjectDetails";
 import RealtimeForm from "./Pages/RealtimeForm";
+import Settings from "./Pages/Settings";
+// import CustomAnnotation from "./Pages/CustomAnnotation";
 
 export default function App() {
     return (
@@ -32,7 +34,9 @@ export default function App() {
                     <Route path="/image-annotation" element={<ImageAnnotation />} />
                     <Route path="/image-gallery" element={<ImageGallery />} />
                     <Route path="/annotator-allocation" element={<AnnotatorAlloaction />} />
-                    {/* <Route path="/text" element={<TextAnotator title="Text Anotator" />} /> */}
+                    <Route path="/setting" element={<Settings />} />
+
+                    <Route path="/text" element={<PredictionPipeline />} />
                 </Routes>
             </div>
         </Router>
