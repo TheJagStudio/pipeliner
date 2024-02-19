@@ -24,7 +24,6 @@ import psutil
 import threading
 from ultralytics import YOLO
 import torch
-from .tools import fast_process, format_results, point_prompt
 from PIL import ImageDraw, Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,6 +32,18 @@ import io
 import csv
 import random
 import base64
+import time
+from threading import Thread
+import genicam.genapi as ge
+from harvesters.core import Harvester
+
+
+width = int(4096)
+height = int(2176)
+h = Harvester()
+h.add_file("D:/Balluff/ImpactAcquire/bin/x64/mvGenTLProducer.cti")
+h.update()
+
 
 predictPath = ""
 predictModel = None
@@ -45,10 +56,11 @@ try:
 except:
     device = torch.device("cpu")
 
-# with make_client(
-#     host="app.cvat.ai", credentials=("basappa", "Tipl@123")
-# ) as client:
-#     CVATClient = client
+try:
+    with make_client(host="app.cvat.ai", credentials=("basappa", "Tipl@123")) as client:
+        CVATClient = client
+except:
+    print("CVAT SDK Not Loaded")
 
 
 def createProject(name, labels):
@@ -851,24 +863,144 @@ def webcam(cameraIndex, project, modelName):
             caps["Camera" + str(cameraIndex)].release()
 
 
+def mainCam(cameraIndex, project, modelName):
+    global predictPath, predictModel, predictFolder, caps, realtimePredict, h
+
+    index = 0
+    for i in h.device_info_list:
+        print(i.serial_number, cameraIndex)
+        if i.serial_number == cameraIndex:
+            break
+        index = index + 1
+    try:
+        caps["Camera" + str(cameraIndex)] = h.create(index)
+    except:
+        h.update()
+        caps["Camera" + str(cameraIndex)] = h.create(index)
+    caps["Camera" + str(cameraIndex)].remote_device.node_map.Width.value = width
+    caps["Camera" + str(cameraIndex)].remote_device.node_map.Height.value = height
+    caps["Camera" + str(cameraIndex)].remote_device.node_map.PixelFormat.value = (
+        "BayerRG8"
+    )
+    caps["Camera" + str(cameraIndex)].remote_device.node_map.ChunkSelector.value = (
+        "ExposureTime"
+    )
+    caps["Camera" + str(cameraIndex)].remote_device.node_map.ExposureTime.set_value(
+        8000.0
+    )
+    caps["Camera" + str(cameraIndex)].start()
+
+    while True:
+        with caps["Camera" + str(cameraIndex)].fetch() as buffer:
+            component = buffer.payload.components[0]
+            image_np = component.data.reshape(height, width)
+            image_np = cv2.cvtColor(image_np, cv2.COLOR_BayerRG2RGB)
+            image_np = cv2.resize(image_np, (int(width / 4), int(height / 4)))
+
+            if realtimePredict:
+                if (
+                    "projects/" + project + "/models/" + modelName + "/weights/best.pt"
+                    != predictPath
+                ):
+                    # If it is, update the prediction path, model, and folder
+                    predictPath = (
+                        "projects/"
+                        + project
+                        + "/models/"
+                        + modelName
+                        + "/weights/best.pt"
+                    )
+                    predictModel = YOLO(
+                        "projects/"
+                        + project
+                        + "/models/"
+                        + modelName
+                        + "/weights/best.pt"
+                    )
+                results = predictModel(
+                    source=image_np,
+                    iou=0.1,
+                    conf=0.1,
+                    imgsz=640,
+                    save=False,
+                    # show_conf=True,
+                    # show_labels=True,
+                    # show_boxes=True,
+                )
+
+                for result in results:
+                    for box in result.boxes:
+                        boxCor = box.xyxy.tolist()[0]
+                        centerX = boxCor[0] + ((boxCor[2] - boxCor[0]) / 2)
+                        centerY = boxCor[1] + ((boxCor[3] - boxCor[1]) / 2)
+                        confident = box.conf.tolist()[0]
+                        # plot the point on the image
+                        imageHeight, imageWidth, _ = image_np.shape
+                        image_np = cv2.circle(
+                            image_np,
+                            (int(centerX), int(centerY)),
+                            10,
+                            (0, 255, 255),
+                            10,
+                        )
+                        image_np = cv2.rectangle(
+                            image_np,
+                            (int(boxCor[0]), int(boxCor[1])),
+                            (int(boxCor[2]), int(boxCor[3])),
+                            (0, 255, 255),
+                            1,
+                        )
+                        image_np = cv2.putText(
+                            image_np,
+                            str(confident)[:4],
+                            (int(boxCor[0]), int(boxCor[1]) + 5),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            1,
+                            (0, 255, 255),
+                            2,
+                            cv2.LINE_AA,
+                        )
+
+            # convert the image to base64
+            _, img_encoded = cv2.imencode(".jpg", np.array(image_np))
+            img_bytes = img_encoded.tobytes()
+            yield (
+                b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + img_bytes + b"\r\n"
+            )
+    pass
+
+
 @csrf_exempt
 def realtimePrediction(request):
     cameraIndex = request.GET["cameraIndex"]
     project = request.GET["project"]
     modelName = request.GET["modelName"]
-
-    # read the camera using opencv
     try:
-        return StreamingHttpResponse(
-            webcam(cameraIndex, project, modelName),
-            content_type="multipart/x-mixed-replace;boundary=frame",
-        )
-    except Exception as e:
-        image = open("static/error.png", "rb").read()
-        return HttpResponse(
-            image,
-            content_type="image/png",
-        )
+        cameraIndex = int(cameraIndex)
+        # read the camera using opencv
+        try:
+            return StreamingHttpResponse(
+                webcam(cameraIndex, project, modelName),
+                content_type="multipart/x-mixed-replace;boundary=frame",
+            )
+        except Exception as e:
+            image = open("static/error.png", "rb").read()
+            return HttpResponse(
+                image,
+                content_type="image/png",
+            )
+    except:
+        try:
+            return StreamingHttpResponse(
+                mainCam(cameraIndex, project, modelName),
+                content_type="multipart/x-mixed-replace;boundary=frame",
+            )
+        except Exception as e:
+            image = open("static/error.png", "rb").read()
+            return HttpResponse(
+                image,
+                content_type="image/png",
+            )
 
 
 def toggleRealtimePrediction(request):
@@ -903,9 +1035,11 @@ def engageCamera(request, index):
     try:
         global caps
         try:
-            caps["Camera" + str(index)] = cv2.VideoCapture(int(index))
+            index = int(index)
+            caps["Camera" + str(index)] = cv2.VideoCapture(index)
         except:
             try:
+                index = int(index)
                 caps["Camera" + str(index)] = cv2.VideoCapture(
                     "/dev/video" + str(index)
                 )
@@ -925,7 +1059,15 @@ def engageCamera(request, index):
 
 def disengageCamera(request, index):
     global caps
-    caps["Camera" + str(index)].release()
+    try:
+        caps["Camera" + str(index)].stop()
+        caps["Camera" + str(index)].destroy()
+    except Exception as e:
+        try:
+            caps["Camera" + str(index)].release()
+        except:
+            pass
+
     return HttpResponse(
         json.dumps(
             {
@@ -1314,7 +1456,32 @@ def projectDetailsFetch(request):
     return HttpResponse(json.dumps({"data": data}), content_type="application/json")
 
 
-# except Exception as e:
-#     return HttpResponse(
-#         json.dumps({"error": str(e)}), content_type="application/json"
-#     )
+@csrf_exempt
+def cameraListFetcher(request):
+    global h
+    try:
+        cameras = []
+        count = 0
+        for i in h.device_info_list:
+            cameras.append([i.serial_number, i.display_name])
+            count += 1
+        h.reset()
+        return HttpResponse(
+            json.dumps({"data": cameras}), content_type="application/json"
+        )
+    except Exception as e:
+        print(e)
+        # get all camera using cv2
+        cameras = []
+        for i in range(5):
+            cap = cv2.VideoCapture(i)
+            if cap is None or not cap.isOpened():
+                pass
+            else:
+                id = i
+                name = "Camera " + str(i)
+                cameras.append([id, name])
+            cap.release()
+        return HttpResponse(
+            json.dumps({"data": cameras}), content_type="application/json"
+        )
