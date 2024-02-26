@@ -51,6 +51,7 @@ predictFolder = ""
 os.environ["WANDB_DISABLED"] = "true"
 realtimePredict = False
 caps = {}
+cameraSetting = {}
 try:
     device = torch.device("cuda")
 except:
@@ -775,7 +776,12 @@ def modelPrediction(request):
 
 
 def webcam(cameraIndex, project, modelName):
-    global predictPath, predictModel, predictFolder, caps, realtimePredict
+    global predictPath, predictModel, predictFolder, caps, realtimePredict, cameraSetting
+    cameraSetting["Camera" + str(cameraIndex)] = {
+        "exposure": 25,
+        "saturation": 1.0,
+        "contrast": 1.0,
+    }
     try:
         caps["Camera" + str(cameraIndex)] = cv2.VideoCapture(int(cameraIndex))
     except:
@@ -789,6 +795,16 @@ def webcam(cameraIndex, project, modelName):
         success, image = caps["Camera" + str(cameraIndex)].read()
         if success:
             image_np = np.array(image)
+            image_np = cv2.convertScaleAbs(
+                image_np,
+                alpha=cameraSetting["Camera" + str(cameraIndex)]["contrast"],
+                beta=cameraSetting["Camera" + str(cameraIndex)]["exposure"],
+            )
+            hsv = cv2.cvtColor(image_np, cv2.COLOR_RGB2HSV)
+            hsv[:, :, 1] = (
+                hsv[:, :, 1] * cameraSetting["Camera" + str(cameraIndex)]["saturation"]
+            )
+            image_np = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
             if realtimePredict:
                 if (
                     "projects/" + project + "/models/" + modelName + "/weights/best.pt"
@@ -864,11 +880,15 @@ def webcam(cameraIndex, project, modelName):
 
 
 def mainCam(cameraIndex, project, modelName):
-    global predictPath, predictModel, predictFolder, caps, realtimePredict, h
+    global predictPath, predictModel, predictFolder, caps, realtimePredict, h, cameraSetting
 
     index = 0
+    cameraSetting["Camera" + str(cameraIndex)] = {
+        "exposure": 25,
+        "saturation": 1.0,
+        "contrast": 1.0,
+    }
     for i in h.device_info_list:
-        print(i.serial_number, cameraIndex)
         if i.serial_number == cameraIndex:
             break
         index = index + 1
@@ -896,6 +916,17 @@ def mainCam(cameraIndex, project, modelName):
             image_np = component.data.reshape(height, width)
             image_np = cv2.cvtColor(image_np, cv2.COLOR_BayerRG2RGB)
             image_np = cv2.resize(image_np, (int(width / 4), int(height / 4)))
+            # increase the exposure
+            image_np = cv2.convertScaleAbs(
+                image_np,
+                alpha=cameraSetting["Camera" + str(cameraIndex)]["contrast"],
+                beta=cameraSetting["Camera" + str(cameraIndex)]["exposure"],
+            )
+            hsv = cv2.cvtColor(image_np, cv2.COLOR_RGB2HSV)
+            hsv[:, :, 1] = (
+                hsv[:, :, 1] * cameraSetting["Camera" + str(cameraIndex)]["saturation"]
+            )
+            image_np = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
 
             if realtimePredict:
                 if (
@@ -1465,10 +1496,12 @@ def cameraListFetcher(request):
         for i in h.device_info_list:
             cameras.append([i.serial_number, i.display_name])
             count += 1
-        h.reset()
-        return HttpResponse(
-            json.dumps({"data": cameras}), content_type="application/json"
-        )
+        if count > 0:
+            return HttpResponse(
+                json.dumps({"data": cameras}), content_type="application/json"
+            )
+        else:
+            raise Exception("No Camera Found")
     except Exception as e:
         print(e)
         # get all camera using cv2
@@ -1484,4 +1517,51 @@ def cameraListFetcher(request):
             cap.release()
         return HttpResponse(
             json.dumps({"data": cameras}), content_type="application/json"
+        )
+
+
+@csrf_exempt
+def CameraSetting(request):
+    global cameraSetting
+    if request.method == "POST":
+        try:
+            cameraIndex = request.POST["cameraIndex"]
+            exposure = request.POST.get("exposure", None)
+            saturation = request.POST.get("saturation", None)
+            contrast = request.POST.get("contrast", None)
+            if exposure is not None:
+                cameraSetting["Camera" + str(cameraIndex)]["exposure"] = int(exposure)
+            if saturation is not None:
+                cameraSetting["Camera" + str(cameraIndex)]["saturation"] = float(
+                    saturation
+                )
+            if contrast is not None:
+                cameraSetting["Camera" + str(cameraIndex)]["contrast"] = float(contrast)
+            return HttpResponse(
+                json.dumps(
+                    {
+                        "status": "success",
+                    }
+                ),
+                content_type="application/json",
+            )
+        except Exception as e:
+            return HttpResponse(
+                json.dumps(
+                    {
+                        "status": "error",
+                        "error": str(e),
+                    }
+                ),
+                content_type="application/json",
+            )
+    else:
+        return HttpResponse(
+            json.dumps(
+                {
+                    "status": "error",
+                    "error": "Invalid Request",
+                }
+            ),
+            content_type="application/json",
         )
