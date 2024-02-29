@@ -28,4 +28,5 @@ urlpatterns = [
         name="toggleRealtimePrediction",
     ),
     path("cameraListFetcher/", views.cameraListFetcher, name="cameraListFetcher"),
+    path("CameraSetting/", views.CameraSetting, name="CameraSetting"),
 ]
